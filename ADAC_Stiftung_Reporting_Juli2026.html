@@ -1,0 +1,726 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>ADAC Stiftung · Social-Media-Reporting</title>
+<style>
+  /* ============ ADAC Stiftung Design Tokens ============ */
+  :root{
+    --anthrazit:#2b2b32;
+    --anthrazit-soft:#3a3a44;
+    --gelb:#ffcc00;
+    --gelb-tief:#e6b800;
+    --papier:#f7f6f3;
+    --weiss:#ffffff;
+    --linie:#e4e2dc;
+    --text:#2b2b32;
+    --text-soft:#6c6c78;
+    --gut:#3a8a5f;
+    --gut-bg:#eaf4ee;
+    --schlecht:#b4543a;
+    --schlecht-bg:#f7ece8;
+    --paid:#c98a2b;
+    --paid-bg:#fbf3e4;
+    --ig:#d6336c;
+    --fb:#2b6cb0;
+    --li:#1a6985;
+    --schatten:0 1px 2px rgba(43,43,50,.05),0 4px 16px rgba(43,43,50,.06);
+    --radius:14px;
+  }
+  *{box-sizing:border-box;margin:0;padding:0}
+  body{
+    font-family:'Segoe UI',-apple-system,BlinkMacSystemFont,Roboto,Helvetica,Arial,sans-serif;
+    background:var(--papier);color:var(--text);line-height:1.55;
+    -webkit-font-smoothing:antialiased;
+  }
+  .wrap{max-width:1080px;margin:0 auto;padding:0 22px 80px}
+
+  /* ============ Kopf ============ */
+  header.top{
+    background:var(--anthrazit);color:#fff;padding:30px 0 26px;margin-bottom:26px;
+    border-bottom:4px solid var(--gelb);
+  }
+  .top .wrap{padding-top:0;padding-bottom:0}
+  .brandrow{display:flex;align-items:center;gap:14px;flex-wrap:wrap}
+  .brandlogo{
+    width:50px;height:50px;border-radius:11px;background:#fff;
+    display:flex;align-items:center;justify-content:center;flex-shrink:0;padding:7px;
+  }
+  .brandlogo svg{width:100%;height:100%;display:block}
+  .brandtext h1{font-size:1.18rem;font-weight:700;letter-spacing:.2px;line-height:1.2}
+  .brandtext p{font-size:.82rem;color:#b9b9c4;font-weight:400}
+  .periode{margin-left:auto;text-align:right}
+  .periode .lbl{font-size:.7rem;text-transform:uppercase;letter-spacing:1.2px;color:#9a9aa6}
+  .periode .val{font-size:1.05rem;font-weight:700;color:var(--gelb)}
+
+  /* ============ Steuerung ============ */
+  .controls{display:flex;gap:18px;align-items:center;flex-wrap:wrap;margin-bottom:26px}
+  .toggle{display:inline-flex;background:var(--weiss);border:1px solid var(--linie);border-radius:11px;padding:4px;box-shadow:var(--schatten)}
+  .toggle button{
+    border:none;background:transparent;padding:9px 20px;border-radius:8px;cursor:pointer;
+    font-size:.92rem;font-weight:600;color:var(--text-soft);transition:.18s;font-family:inherit;
+  }
+  .toggle button.active{background:var(--anthrazit);color:#fff}
+  .monthsel{margin-left:auto;display:flex;align-items:center;gap:9px}
+  .monthsel label{font-size:.82rem;color:var(--text-soft);font-weight:600}
+  .monthsel select{
+    font-family:inherit;font-size:.92rem;font-weight:600;color:var(--text);
+    padding:9px 14px;border:1px solid var(--linie);border-radius:9px;background:var(--weiss);cursor:pointer;
+  }
+
+  /* ============ Sektionen ============ */
+  .view{display:none}
+  .view.active{display:block;animation:fade .35s ease}
+  @keyframes fade{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:none}}
+  .sec{margin-bottom:34px}
+  .sec-h{display:flex;align-items:baseline;gap:11px;margin-bottom:15px}
+  .sec-h .num{font-size:.72rem;font-weight:700;color:var(--gelb-tief);letter-spacing:1px}
+  .sec-h h2{font-size:1.12rem;font-weight:700}
+  .sec-h .hint{font-size:.8rem;color:var(--text-soft);margin-left:auto;font-weight:400}
+
+  /* ============ KPI Kacheln ============ */
+  .kpis{display:grid;grid-template-columns:repeat(4,1fr);gap:14px}
+  .kpi{background:var(--weiss);border:1px solid var(--linie);border-radius:var(--radius);padding:18px 18px 16px;box-shadow:var(--schatten);display:flex;flex-direction:column}
+  .kpi .k-lbl{font-size:.74rem;text-transform:uppercase;letter-spacing:.8px;color:var(--text-soft);font-weight:700}
+  .kpi .k-val{font-size:1.72rem;font-weight:800;letter-spacing:-.5px;margin:5px 0 2px}
+  .kpi .k-sub{font-size:.76rem;color:var(--text-soft)}
+  .delta{font-size:.78rem;font-weight:700;display:inline-flex;align-items:center;gap:3px;margin-top:6px;margin-bottom:2px}
+  .delta.up{color:var(--gut)} .delta.down{color:var(--schlecht)} .delta.flat{color:var(--text-soft)}
+
+  /* Kanal-Aufschlüsselung in Kachel */
+  .chanrow{display:flex;gap:4px;margin-top:auto;padding-top:11px;font-size:.7rem}
+  .chanrow .c{flex:1;text-align:center;padding:5px 2px;border-radius:6px;background:var(--papier)}
+  .chanrow .c b{display:block;font-size:.82rem;font-weight:800;color:var(--text)}
+  .chanrow .c.ig b{color:var(--ig)} .chanrow .c.fb b{color:var(--fb)} .chanrow .c.li b{color:var(--li)}
+  .chanrow .c span{color:var(--text-soft);font-weight:600}
+
+  /* ============ Kanalfilter ============ */
+  .chanfilter{display:inline-flex;gap:6px;margin-bottom:14px}
+  .chanfilter button{
+    border:1px solid var(--linie);background:var(--weiss);padding:6px 14px;border-radius:8px;cursor:pointer;
+    font-size:.82rem;font-weight:600;color:var(--text-soft);font-family:inherit;transition:.15s;
+  }
+  .chanfilter button.active{background:var(--anthrazit);color:#fff;border-color:var(--anthrazit)}
+
+  /* ============ Top Posts ============ */
+  .posts{display:flex;flex-direction:column;gap:10px}
+  .post{
+    background:var(--weiss);border:1px solid var(--linie);border-radius:12px;padding:14px 16px;
+    display:grid;grid-template-columns:auto 1fr auto;gap:15px;align-items:center;box-shadow:var(--schatten);
+    text-decoration:none;color:inherit;transition:transform .15s,box-shadow .15s,border-color .15s;
+  }
+  .post:hover{transform:translateY(-2px);box-shadow:0 4px 18px rgba(43,43,50,.12);border-color:var(--gelb)}
+  .post:focus-visible{outline:2px solid var(--gelb-tief);outline-offset:2px}
+  .post .pdate{transition:color .15s}
+  .post:hover .pdate{color:var(--gelb-tief)}
+  .post .rank{font-size:1.1rem;font-weight:800;color:var(--linie);width:26px;text-align:center}
+  .badge{display:inline-block;font-size:.66rem;font-weight:700;padding:2px 8px;border-radius:5px;text-transform:uppercase;letter-spacing:.5px;vertical-align:middle}
+  .badge.ig{background:#fce8f0;color:var(--ig)} .badge.fb{background:#e6f0fa;color:var(--fb)} .badge.li{background:#e3f1f6;color:var(--li)}
+  .badge.paid{background:var(--paid-bg);color:var(--paid);margin-left:6px}
+  .post .meta{min-width:0}
+  .post .meta .ptext{font-size:.9rem;font-weight:600;margin:5px 0 3px;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
+  .post .meta .pdate{font-size:.74rem;color:var(--text-soft)}
+  .post .stats{display:flex;gap:16px;text-align:right;flex-shrink:0}
+  .post .stats .s{font-size:.72rem;color:var(--text-soft)}
+  .post .stats .s b{display:block;font-size:1.02rem;font-weight:800;color:var(--text)}
+  .post .stats .s.hl b{color:var(--gelb-tief)}
+
+  /* ============ Charts ============ */
+  .card{background:var(--weiss);border:1px solid var(--linie);border-radius:var(--radius);padding:20px 22px;box-shadow:var(--schatten)}
+  .chart-wrap{margin-top:4px}
+  .legend{display:flex;gap:16px;margin-bottom:12px;flex-wrap:wrap}
+  .legend .li-item{display:inline-flex;align-items:center;gap:6px;font-size:.78rem;color:var(--text-soft);font-weight:600}
+  .legend .dot{width:11px;height:11px;border-radius:3px}
+  .bars{display:flex;align-items:flex-end;gap:14px;height:230px;padding-top:10px}
+  .barcol{flex:1;display:flex;flex-direction:column;align-items:center;gap:7px;height:100%}
+  .bartotal{font-size:.72rem;font-weight:800;color:var(--text);white-space:nowrap}
+  .barstack{flex:1;width:100%;display:flex;flex-direction:column;justify-content:flex-end;gap:2px;min-height:0}
+  .bar{width:100%;border-radius:3px 3px 0 0;transition:.2s}
+  .barlabel{font-size:.74rem;color:var(--text-soft);font-weight:700}
+
+  /* Follower line chart (SVG) */
+  svg.line{width:100%;height:auto;display:block}
+
+  /* Ziele */
+  .goals{display:grid;grid-template-columns:repeat(3,1fr);gap:14px}
+  .goal{background:var(--weiss);border:1px solid var(--linie);border-radius:var(--radius);padding:17px 18px;box-shadow:var(--schatten)}
+  .goal .g-lbl{font-size:.78rem;font-weight:700;color:var(--text-soft);text-transform:uppercase;letter-spacing:.6px}
+  .goal .g-val{font-size:1.3rem;font-weight:800;margin:6px 0 3px}
+  .goal .g-tgt{font-size:.76rem;color:var(--text-soft)}
+  .progress{height:7px;background:var(--papier);border-radius:5px;margin-top:10px;overflow:hidden}
+  .progress .fill{height:100%;border-radius:5px}
+
+  /* ============ Demografie ============ */
+  .demo-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:16px}
+  .demo-card{background:var(--weiss);border:1px solid var(--linie);border-radius:var(--radius);padding:18px;box-shadow:var(--schatten)}
+  .demo-card h3{font-size:.95rem;font-weight:700;display:flex;align-items:center;gap:7px;margin-bottom:4px}
+  .demo-card .chan-tag{font-size:.68rem;font-weight:700;padding:2px 8px;border-radius:5px}
+  .demo-card .sub{font-size:.74rem;color:var(--text-soft);margin-bottom:14px}
+  .demo-row{margin-bottom:9px}
+  .demo-row .dr-top{display:flex;justify-content:space-between;font-size:.78rem;margin-bottom:3px}
+  .demo-row .dr-top b{font-weight:700} .demo-row .dr-top span{color:var(--text-soft)}
+  .demo-bar{height:6px;background:var(--papier);border-radius:4px;overflow:hidden}
+  .demo-bar i{display:block;height:100%;border-radius:4px}
+  .demo-note{font-size:.72rem;color:var(--text-soft);background:var(--papier);border-radius:8px;padding:9px 11px;margin-top:8px;line-height:1.45}
+  .genderwrap{display:flex;gap:8px;margin-bottom:14px}
+  .genderbox{flex:1;text-align:center;padding:11px 6px;border-radius:9px;background:var(--papier)}
+  .genderbox b{display:block;font-size:1.25rem;font-weight:800}
+  .genderbox.f b{color:var(--ig)} .genderbox.m b{color:var(--fb)}
+  .genderbox span{font-size:.72rem;color:var(--text-soft);font-weight:600}
+
+  /* ============ Erkenntnisse / Empfehlungen ============ */
+  .insight-cols{display:grid;grid-template-columns:1fr 1fr;gap:16px}
+  .ins-box{border-radius:var(--radius);padding:18px 20px;border:1px solid}
+  .ins-box.good{background:var(--gut-bg);border-color:#cfe6d8}
+  .ins-box.bad{background:var(--schlecht-bg);border-color:#eed6cd}
+  .ins-box h3{font-size:.92rem;font-weight:700;margin-bottom:11px;display:flex;align-items:center;gap:7px}
+  .ins-box.good h3{color:var(--gut)} .ins-box.bad h3{color:var(--schlecht)}
+  .ins-box ul{list-style:none}
+  .ins-box li{font-size:.86rem;margin-bottom:11px;padding-left:18px;position:relative;line-height:1.5}
+  .ins-box li:last-child{margin-bottom:0}
+  .ins-box.good li::before{content:"▲";position:absolute;left:0;color:var(--gut);font-size:.7rem;top:3px}
+  .ins-box.bad li::before{content:"▼";position:absolute;left:0;color:var(--schlecht);font-size:.7rem;top:3px}
+  .reco{background:var(--anthrazit);color:#fff;border-radius:var(--radius);padding:22px 24px}
+  .reco h3{font-size:.98rem;font-weight:700;margin-bottom:14px;color:var(--gelb);display:flex;align-items:center;gap:8px}
+  .reco ol{list-style:none;counter-reset:r}
+  .reco li{font-size:.88rem;margin-bottom:13px;padding-left:34px;position:relative;line-height:1.5;color:#e8e8ee}
+  .reco li:last-child{margin-bottom:0}
+  .reco li::before{
+    counter-increment:r;content:counter(r);position:absolute;left:0;top:-1px;
+    width:23px;height:23px;background:var(--gelb);color:var(--anthrazit);border-radius:6px;
+    font-size:.78rem;font-weight:800;display:flex;align-items:center;justify-content:center;
+  }
+  .reco li b{color:#fff}
+
+  /* ============ Glossar ============ */
+  .glossar{background:var(--weiss);border:1px solid var(--linie);border-radius:var(--radius);padding:18px 22px;box-shadow:var(--schatten)}
+  .glossar h3{font-size:.9rem;font-weight:700;margin-bottom:13px}
+  .gloss-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:9px 28px}
+  .gloss-item{font-size:.82rem;display:flex;gap:8px;padding-bottom:8px;border-bottom:1px dashed var(--linie)}
+  .gloss-item dt{font-weight:700;min-width:115px;color:var(--anthrazit)}
+  .gloss-item dd{color:var(--text-soft)}
+
+  /* Quelle / Footer */
+  .quelle{font-size:.74rem;color:var(--text-soft);text-align:center;margin-top:30px;padding-top:18px;border-top:1px solid var(--linie)}
+  .footer-agency{display:flex;flex-direction:column;align-items:center;gap:6px;margin-bottom:16px}
+  .footer-agency .agencylbl{font-size:.62rem;text-transform:uppercase;letter-spacing:1.4px;color:var(--text-soft)}
+  .footer-agency svg{height:34px;width:auto;display:block}
+
+  .flag{font-size:.74rem;background:var(--paid-bg);border:1px solid #ecd9b4;color:#8a6420;border-radius:8px;padding:8px 12px;margin-top:10px;display:none}
+
+  @media(max-width:860px){
+    .kpis{grid-template-columns:repeat(2,1fr)}
+    .demo-grid,.goals{grid-template-columns:1fr}
+    .insight-cols{grid-template-columns:1fr}
+    .gloss-grid{grid-template-columns:1fr}
+    .post{grid-template-columns:auto 1fr;gap:10px}
+    .post .stats{grid-column:1/-1;justify-content:flex-start;gap:22px}
+  }
+</style>
+</head>
+<body>
+
+<header class="top">
+  <div class="wrap">
+    <div class="brandrow">
+      <div class="brandlogo">
+        <svg viewBox="0 0 215 215.33" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="ADAC Stiftung">
+          <path fill="#bcbcbc" d="M80.01,152.38c49.66,9.16,103.41.46,134.99-42.01-.1,19.9-6.46,39.61-17.36,56.13-9.8,14.85-35.13,40.47-54.13,38.85-23.51-2-53.77-32.23-63.51-52.98Z"/>
+          <path fill="#bcbcbc" d="M138,210.38l-13.76,3.72c-29.91,4.87-62.96-4.96-85.7-24.76-6.87-5.98-11.68-10.81-12.57-20.43-2.39-25.9,13.81-56.5,31.55-74.54,5.48,48.82,30.88,100.34,80.49,116.01Z"/>
+          <path fill="#bcbcbc" d="M103,54.39c.5,2.34-.32,1.6-1.29,2.23-4.52,2.93-10.65,5.23-15.63,8.34-38.4,24.01-65.63,57.01-66.58,104.41C-.94,140.79-5.66,102.71,6.99,69.85c1.27-3.29,2.65-7.57,4.58-10.42,16-23.51,68.85-15.23,91.43-5.05Z"/>
+          <path fill="#bcbcbc" d="M143.01,147.37c17.72-36.55,27.37-74.86,13.01-114.51-3.45-9.52-7.47-15.74-13.01-23.99-.51-.76-2.1-1.64-.49-2.51,31.09,10.33,56.79,35.68,67.2,66.8,1.61,4.82,4.39,13.84,4.37,18.71-.07,26.34-47.98,52.4-71.08,55.5Z"/>
+          <path fill="#fecb02" d="M108.02,98.37c4.26-20.06,31.22-16.52,29.07,2.51-1.58,13.95-19.19,27.07-28.58,35.54-9.05-7.31-27.55-21.35-28.55-33.48-1.7-20.59,24.35-24.81,28.06-4.56Z"/>
+          <path fill="#bcbcbc" d="M156,86.37C120.38,51.01,71.61,26.98,21.03,44.88,42.59,13.91,79.84-2.61,117.54.34c18.11,1.41,27.05,18.04,32.48,33.52,5.67,16.17,8.61,35.57,5.97,52.51Z"/>
+        </svg>
+      </div>
+      <div class="brandtext">
+        <h1>ADAC Stiftung · Social-Media-Reporting</h1>
+        <p>Channel-Performance (organisch &amp; bezahlt) · Instagram, Facebook &amp; LinkedIn</p>
+      </div>
+      <div class="periode">
+        <div class="lbl">Datenstand</div>
+        <div class="val">03.08.2026</div>
+      </div>
+    </div>
+    </div>
+  </div>
+</header>
+
+<div class="wrap">
+
+  <!-- Steuerung -->
+  <div class="controls">
+    <div class="toggle">
+      <button class="active" data-view="month" onclick="switchView('month',this)">Monatsansicht</button>
+      <button data-view="year" onclick="switchView('year',this)">Jahresansicht</button>
+    </div>
+    <div class="monthsel" id="monthsel-wrap">
+      <label for="monthsel">Monat</label>
+      <select id="monthsel" onchange="selectMonth(this.value)">
+        <option value="Jan">Januar 2026</option>
+        <option value="Feb">Februar 2026</option>
+        <option value="Mär">März 2026</option>
+        <option value="Apr">April 2026</option>
+        <option value="Mai">Mai 2026</option>
+        <option value="Jun">Juni 2026</option>
+        <option value="Jul" selected>Juli 2026</option>
+      </select>
+    </div>
+  </div>
+
+  <!-- ============================ MONATSANSICHT ============================ -->
+  <div class="view active" id="view-month">
+
+    <!-- KPIs -->
+    <section class="sec">
+      <div class="sec-h"><span class="num">01</span><h2>Kennzahlen im Überblick</h2><span class="hint" id="kpi-hint">Veränderung ggü. Vormonat</span></div>
+      <div class="kpis" id="kpis"></div>
+    </section>
+
+    <!-- Top Posts -->
+    <section class="sec">
+      <div class="sec-h"><span class="num">02</span><h2>Top-Beiträge des Monats</h2><span class="hint">nach Engagement-Rate</span></div>
+      <div class="chanfilter">
+        <button class="active" data-c="all" onclick="filterPosts('all',this)">Alle</button>
+        <button data-c="ig" onclick="filterPosts('ig',this)">Instagram</button>
+        <button data-c="fb" onclick="filterPosts('fb',this)">Facebook</button>
+        <button data-c="li" onclick="filterPosts('li',this)">LinkedIn</button>
+      </div>
+      <div class="posts" id="posts"></div>
+    </section>
+
+    <!-- Erkenntnisse -->
+    <section class="sec">
+      <div class="sec-h"><span class="num">03</span><h2>Erkenntnisse</h2><span class="hint">redaktionelle Einordnung</span></div>
+      <div class="insight-cols">
+        <div class="ins-box good">
+          <h3>✓ Das lief gut</h3>
+          <ul id="ins-good"></ul>
+        </div>
+        <div class="ins-box bad">
+          <h3>! Das ist einzuordnen</h3>
+          <ul id="ins-bad"></ul>
+        </div>
+      </div>
+    </section>
+
+    <!-- Empfehlungen -->
+    <section class="sec">
+      <div class="sec-h"><span class="num">04</span><h2 id="reco-title">Empfehlungen für den Folgemonat</h2></div>
+      <div class="reco">
+        <h3>→ Handlungsempfehlungen</h3>
+        <ol id="reco-list"></ol>
+      </div>
+    </section>
+
+    <!-- Glossar -->
+    <section class="sec">
+      <div class="glossar">
+        <h3>Begriffserklärungen</h3>
+        <dl class="gloss-grid">
+          <div class="gloss-item"><dt>Aufrufe</dt><dd>Impressions inkl. wiederholter Ansichten und bezahlter Reichweite</dd></div>
+          <div class="gloss-item"><dt>Reichweite</dt><dd>Eindeutige Personen, die Inhalte gesehen haben</dd></div>
+          <div class="gloss-item"><dt>Organisch</dt><dd>Ohne Werbebudget</dd></div>
+          <div class="gloss-item"><dt>Bezahlt / Paid</dt><dd>Über Werbeanzeigen verbreitet</dd></div>
+          <div class="gloss-item"><dt>Interaktionen</dt><dd>Likes, Kommentare, geteilte Inhalte, gespeicherte Beiträge</dd></div>
+          <div class="gloss-item"><dt>Engagement-Rate</dt><dd>Interaktionen ÷ Reichweite (IG) bzw. ÷ Aufrufe (FB/LI)</dd></div>
+        </dl>
+      </div>
+    </section>
+  </div>
+
+  <!-- ============================ JAHRESANSICHT ============================ -->
+  <div class="view" id="view-year">
+
+    <!-- Ziele -->
+    <section class="sec">
+      <div class="sec-h"><span class="num">01</span><h2>Strategische Ziele 2026</h2><span class="hint">Stand: Ende Juli</span></div>
+      <div class="goals">
+        <div class="goal">
+          <div class="g-lbl">Sichtbarkeit</div>
+          <div class="g-val">Ø 276.953 <span style="font-size:.8rem;font-weight:600;color:var(--text-soft)">Aufrufe/Monat</span></div>
+          <div class="g-tgt">Ziel: Ø 250.000 / Monat · <b style="color:var(--gut)">übertroffen</b></div>
+          <div class="progress"><div class="fill" style="width:100%;background:var(--gut)"></div></div>
+        </div>
+        <div class="goal">
+          <div class="g-lbl">Engagement</div>
+          <div class="g-val">Ø 2,89 %</div>
+          <div class="g-tgt">Ziel: Ø 1,0 % · <b style="color:var(--gut)">übertroffen</b></div>
+          <div class="progress"><div class="fill" style="width:100%;background:var(--gut)"></div></div>
+        </div>
+        <div class="goal">
+          <div class="g-lbl">Follower-Wachstum</div>
+          <div class="g-val">+152 <span style="font-size:.8rem;font-weight:600;color:var(--text-soft)">netto</span></div>
+          <div class="g-tgt">Ziel: +15 % (+1.683) bis Jan 2027 · 9,0 %</div>
+          <div class="progress"><div class="fill" style="width:9.0%;background:var(--schlecht)"></div></div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Aufrufe Verlauf -->
+    <section class="sec">
+      <div class="sec-h"><span class="num">02</span><h2>Aufrufe im Jahresverlauf</h2><span class="hint">kanalübergreifend vergleichbar</span></div>
+      <div class="card">
+        <div class="legend">
+          <span class="li-item"><span class="dot" style="background:var(--ig)"></span>Instagram</span>
+          <span class="li-item"><span class="dot" style="background:var(--fb)"></span>Facebook</span>
+          <span class="li-item"><span class="dot" style="background:var(--li)"></span>LinkedIn</span>
+        </div>
+        <div class="bars" id="bars-aufrufe"></div>
+      </div>
+    </section>
+
+    <!-- Follower Verlauf -->
+    <section class="sec">
+      <div class="sec-h"><span class="num">03</span><h2>Top-Beiträge des Jahres</h2><span class="hint" id="ytop-hint">ausgewogen: Reichweite &amp; Interaktion</span></div>
+      <div class="chanfilter" style="flex-wrap:wrap">
+        <button class="active" data-y="balanced" onclick="filterYearTop('balanced',this)">Ausgewogen</button>
+        <button data-y="er" onclick="filterYearTop('er',this)">Engagement-Rate</button>
+        <button data-y="inter" onclick="filterYearTop('inter',this)">Interaktionen</button>
+        <button data-y="reach" onclick="filterYearTop('reach',this)">Reichweite</button>
+      </div>
+      <div class="posts" id="ytop-posts"></div>
+      <p style="font-size:.74rem;color:var(--text-soft);margin-top:10px" id="ytop-note"></p>
+    </section>
+
+    <!-- Follower Verlauf -->
+    <section class="sec">
+      <div class="sec-h"><span class="num">04</span><h2>Follower-Entwicklung</h2><span class="hint">echte Monatsendstände</span></div>
+      <div class="card" id="follower-card"></div>
+    </section>
+
+    <!-- Zielgruppe -->
+    <section class="sec">
+      <div class="sec-h"><span class="num">05</span><h2>Zielgruppe</h2><span class="hint">Momentaufnahme · wer folgt aktuell</span></div>
+      <div class="demo-grid">
+
+        <!-- Instagram -->
+        <div class="demo-card">
+          <h3><span class="chan-tag" style="background:#fce8f0;color:var(--ig)">Instagram</span></h3>
+          <div class="sub">Alter, Geschlecht &amp; Herkunft</div>
+          <div class="genderwrap">
+            <div class="genderbox f"><b>62 %</b><span>weiblich</span></div>
+            <div class="genderbox m"><b>33 %</b><span>männlich</span></div>
+            <div class="genderbox"><b>5 %</b><span>o. A.</span></div>
+          </div>
+          <div id="ig-age"></div>
+          <div class="demo-note"><b>Herkunft:</b> ~94 % Deutschland, gefolgt von Österreich und der Schweiz.</div>
+        </div>
+
+        <!-- Facebook -->
+        <div class="demo-card">
+          <h3><span class="chan-tag" style="background:#e6f0fa;color:var(--fb)">Facebook</span></h3>
+          <div class="sub">Herkunft der Fans</div>
+          <div id="fb-country"></div>
+          <div class="demo-note">Alters- und Geschlechtsdaten werden von Meta seit 2024 nicht mehr bereitgestellt. Angezeigt wird daher die geografische Verteilung.</div>
+        </div>
+
+        <!-- LinkedIn -->
+        <div class="demo-card">
+          <h3><span class="chan-tag" style="background:#e3f1f6;color:var(--li)">LinkedIn</span></h3>
+          <div class="sub">Beruflicher Kontext der Follower</div>
+          <div id="li-industry"></div>
+          <div class="demo-note"><b>Seniorität:</b> breit verteilt – stark vertreten sind Senior- (540), Einstiegs- (480) und Führungsebene (Director 223, VP 116, CXO 72).</div>
+        </div>
+
+      </div>
+    </section>
+  </div>
+
+  <div class="quelle">
+    <div class="footer-agency">
+      <span class="agencylbl">erstellt von</span>
+      <svg viewBox="0 0 122.4981 84.2851" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="hertz6">
+        <polygon points="80.276 42.27 95.416 15.664 57.906 15.664 57.906 55.764 72.602 55.764 56.383 84.285 95.077 55.454 95.077 42.27 80.276 42.27"/>
+        <path d="M33.08,55.7974V35.667H20.5039V55.805H0V.8675H20.4667V19.7546H33.07V.8794H53.5028v54.918Z"/>
+        <path d="M121.9024,8.6826h-9.1633c-.0179-.0257-.0377-.0423-.0424-.0625-.2574-1.106-.7474-1.395-1.9719-1.3288-1.7421.0942-2.5189,1.2326-2.89,2.7506-.1824.7469-.27,1.5168-.4009,2.2763l.1259.0474c.1232-.1479.2542-.29.3685-.4446a5.3974,5.3974,0,0,1,3.7224-2.1332,11.1411,11.1411,0,0,1,6.6134.9347,6.8211,6.8211,0,0,1,3.0249,2.8127,9.4962,9.4962,0,0,1,.6581,7.8626,8.6554,8.6554,0,0,1-5.2164,5.3818,18.1572,18.1572,0,0,1-11.8143.2527A10.1015,10.1015,0,0,1,99.09,21.87a15.3009,15.3009,0,0,1-1.4487-5.5676,22.75,22.75,0,0,1,.0817-5.3687,12.63,12.63,0,0,1,4.4627-8.1278,12.0376,12.0376,0,0,1,5.322-2.5087,16.91,16.91,0,0,1,5.11-.1921,13.0683,13.0683,0,0,1,4.4954,1.1624,8.1291,8.1291,0,0,1,4.6532,6.4879C121.8119,8.0577,121.8549,8.36,121.9024,8.6826Zm-9.1236,9.7316.0941-.0276a9.5816,9.5816,0,0,0-.401-1.4915,2.2448,2.2448,0,0,0-3.6637-.5384,3.0343,3.0343,0,0,0-.4457,3.2444,2.2507,2.2507,0,0,0,3.4063.8925A2.6255,2.6255,0,0,0,112.7788,18.4142Z"/>
+      </svg>
+    </div>
+    Quelle: Meta Business Suite &amp; LinkedIn Analytics · Datenstand 03.08.2026<br>
+    Reichweite wird je Plattform unterschiedlich gemessen und daher pro Kanal separat ausgewiesen.
+  </div>
+
+</div>
+
+<script>
+/* ====================== Monatsdaten ====================== */
+const MONTHLY = {"Jan": {"name": "Januar 2026", "aufrufe": {"ges": 68559, "ig": 20353, "fb": 40085, "li": 8121}, "reichweite": {"ges": 36457, "ig": 4836, "fb": 25943, "li": 5678}, "er": {"ig": 5.09, "fb": 1.19, "li": 2.96, "ges": 2.98, "n": 19}, "follower": {"ges": 11221, "fb": 6240, "ig": 3160, "li": 1821}, "posts": [{"c": "ig", "date": "05.01.", "text": "Sicherer Schulweg nach den Ferien – Tipps auffrischen", "reach": 147, "inter": 5, "er": 3.4, "paid": false, "url": "https://www.instagram.com/p/DTIfmbRDGm4/"}, {"c": "ig", "date": "12.01.", "text": "Elterntaxis vermeiden, Selbstständigkeit stärken", "reach": 150, "inter": 5, "er": 3.33, "paid": false, "url": "https://www.instagram.com/p/DTaDLDRDHQz/"}, {"c": "ig", "date": "13.01.", "text": "Der „Pinguin-Gang\" bei Glatteis", "reach": 196, "inter": 10, "er": 5.1, "paid": false, "url": "https://www.instagram.com/p/DTdM31qjHAU/"}, {"c": "ig", "date": "15.01.", "text": "Übungsleiter:innen gesucht – ADACUS & Achtung Auto", "reach": 328, "inter": 10, "er": 3.05, "paid": false, "url": "https://www.instagram.com/p/DTiRBLTjA3e/"}, {"c": "ig", "date": "21.01.", "text": "Neue Reanimationsleitlinien – jede Sekunde zählt", "reach": 360, "inter": 39, "er": 10.83, "paid": false, "url": "https://www.instagram.com/p/DTxE7-_DJAv/"}, {"c": "ig", "date": "29.01.", "text": "Reanimation gehört in die Schule", "reach": 249, "inter": 12, "er": 4.82, "paid": false, "url": "https://www.instagram.com/p/DUGaGOcF2lG/"}, {"c": "fb", "date": "05.01.", "text": "Sicherer Schulweg nach den Ferien", "reach": 306, "inter": 3, "er": 0.98, "paid": false, "url": "https://www.facebook.com/1445304764310873/posts/1313972960777388"}, {"c": "fb", "date": "07.01.", "text": "Gute Vorsätze: Reanimationskenntnisse auffrischen", "reach": 345, "inter": 10, "er": 2.9, "paid": false, "url": "https://www.facebook.com/1445304764310873/posts/1316934737147877"}, {"c": "fb", "date": "09.01.", "text": "Elterntaxis vermeiden", "reach": 190, "inter": 2, "er": 1.05, "paid": false, "url": "https://www.facebook.com/1445304764310873/posts/1319115153596502"}, {"c": "fb", "date": "11.01.", "text": "Der „Pinguin-Gang\" bei Glatteis", "reach": 178, "inter": 3, "er": 1.69, "paid": false, "url": "https://www.facebook.com/1445304764310873/posts/1320105210164163"}, {"c": "fb", "date": "13.01.", "text": "Übungsleiter:innen gesucht", "reach": 205, "inter": 1, "er": 0.49, "paid": false, "url": "https://www.facebook.com/1445304764310873/posts/1321671523340865"}, {"c": "fb", "date": "17.01.", "text": "Neue Reanimationsleitlinien – jede Sekunde zählt", "reach": 42887, "inter": 199, "er": 0.46, "paid": false, "url": "https://www.facebook.com/1445304764310873/posts/1326317919542892"}, {"c": "fb", "date": "24.01.", "text": "Reanimation rettet Leben – Hebel Schule", "reach": 1926, "inter": 14, "er": 0.73, "paid": false, "url": "https://www.facebook.com/1445304764310873/posts/1333593125482038"}, {"c": "li", "date": "07.01.", "text": "Elterntaxis vermeiden, Selbstständigkeit stärken", "reach": 532, "inter": 13, "er": 2.44, "paid": false, "url": "https://www.linkedin.com/feed/update/urn:li:ugcPost:7416423152026746880"}, {"c": "li", "date": "10.01.", "text": "Übungsleiter:innen gesucht", "reach": 726, "inter": 29, "er": 3.99, "paid": false, "url": "https://www.linkedin.com/feed/update/urn:li:share:7417579187596771328"}, {"c": "li", "date": "16.01.", "text": "Neue Reanimationsleitlinien", "reach": 5360, "inter": 49, "er": 0.91, "paid": false, "url": "https://www.linkedin.com/feed/update/urn:li:ugcPost:7419663208610721792"}, {"c": "li", "date": "24.01.", "text": "Leben retten beginnt beim Menschen – Expertin Nadja", "reach": 286, "inter": 5, "er": 1.75, "paid": false, "url": "https://www.linkedin.com/feed/update/urn:li:ugcPost:7422550431580524545"}, {"c": "li", "date": "24.01.", "text": "Reanimation rettet Leben – Hebel Schule", "reach": 685, "inter": 32, "er": 4.67, "paid": false, "url": "https://www.linkedin.com/feed/update/urn:li:ugcPost:7422666903745236992"}, {"c": "li", "date": "25.01.", "text": "Zivilgesellschaft: die NGO-Debatte", "reach": 251, "inter": 10, "er": 3.98, "paid": false, "url": "https://www.linkedin.com/feed/update/urn:li:ugcPost:7422920585871011840"}], "delta": null}, "Feb": {"name": "Februar 2026", "aufrufe": {"ges": 126663, "ig": 44194, "fb": 80266, "li": 2203}, "reichweite": {"ges": 122891, "ig": 55922, "fb": 65758, "li": 1211}, "er": {"ig": 4.15, "fb": 1.35, "li": 2.65, "ges": 2.72, "n": 17}, "follower": {"ges": 11213, "fb": 6231, "ig": 3156, "li": 1826}, "posts": [{"c": "ig", "date": "10.02.", "text": "Vorbereitung auf die Fahrradprüfung", "reach": 191, "inter": 17, "er": 8.9, "paid": false, "url": "https://www.instagram.com/p/DUkpTuwDBZ1/"}, {"c": "ig", "date": "12.02.", "text": "Karneval: aufmerksam und bremsbereit", "reach": 338, "inter": 9, "er": 2.66, "paid": false, "url": "https://www.instagram.com/p/DUqf9S8jARP/"}, {"c": "ig", "date": "17.02.", "text": "Winterlicher Schulweg – sicher unterwegs", "reach": 161, "inter": 5, "er": 3.11, "paid": false, "url": "https://www.instagram.com/p/DU3U6jXgKWz/"}, {"c": "ig", "date": "20.02.", "text": "Verkehrssituationen-Quiz – löst ihr alle?", "reach": 258, "inter": 11, "er": 4.26, "paid": false, "url": "https://www.instagram.com/p/DU-4z10DIwo/"}, {"c": "ig", "date": "24.02.", "text": "E-Scooter: Mythen und Fakten", "reach": 341, "inter": 7, "er": 2.05, "paid": false, "url": "https://www.instagram.com/p/DVJa1wJDGT4/"}, {"c": "ig", "date": "27.02.", "text": "Warum Kinder Mobilitätsbildung brauchen", "reach": 355, "inter": 14, "er": 3.94, "paid": false, "url": "https://www.instagram.com/p/DVRBw57jkFM/"}, {"c": "fb", "date": "02.02.", "text": "Vorbereitung auf die Fahrradprüfung", "reach": 303, "inter": 3, "er": 0.99, "paid": false, "url": "https://www.facebook.com/1445304764310873/posts/1344461851061832"}, {"c": "fb", "date": "05.02.", "text": "Karneval: aufmerksam und bremsbereit", "reach": 320, "inter": 2, "er": 0.62, "paid": false, "url": "https://www.facebook.com/1445304764310873/posts/1346513467523337"}, {"c": "fb", "date": "12.02.", "text": "Winterlicher Schulweg", "reach": 359, "inter": 5, "er": 1.39, "paid": false, "url": "https://www.facebook.com/1445304764310873/posts/1350954000412617"}, {"c": "fb", "date": "17.02.", "text": "Verkehrssituationen-Quiz", "reach": 135537, "inter": 20, "er": 0.01, "paid": true, "url": "https://www.facebook.com/1445304764310873/posts/1353441436830540"}, {"c": "fb", "date": "24.02.", "text": "E-Scooter: Mythen und Fakten", "reach": 229, "inter": 4, "er": 1.75, "paid": false, "url": "https://www.facebook.com/1445304764310873/posts/1357012236473460"}, {"c": "fb", "date": "27.02.", "text": "Warum Kinder Mobilitätsbildung brauchen", "reach": 151, "inter": 5, "er": 3.31, "paid": false, "url": "https://www.facebook.com/1445304764310873/posts/1359696042871746"}, {"c": "li", "date": "05.02.", "text": "Jahresbilanz ADAC Luftrettung 2025", "reach": 167, "inter": 6, "er": 3.59, "paid": false, "url": "https://www.linkedin.com/feed/update/urn:li:ugcPost:7427355141256859651"}, {"c": "li", "date": "05.02.", "text": "Europäischer Tag des Notrufs", "reach": 390, "inter": 10, "er": 2.56, "paid": false, "url": "https://www.linkedin.com/feed/update/urn:li:ugcPost:7427262434488422400"}, {"c": "li", "date": "12.02.", "text": "Christina Tillmann im NGO-Podcast", "reach": 217, "inter": 5, "er": 2.3, "paid": false, "url": "https://www.linkedin.com/feed/update/urn:li:ugcPost:7429843506380115968"}, {"c": "li", "date": "18.02.", "text": "Humanoide Roboter als Pannenhelfer?", "reach": 266, "inter": 2, "er": 0.75, "paid": false, "url": "https://www.linkedin.com/feed/update/urn:li:ugcPost:7432098054985445376"}, {"c": "li", "date": "21.02.", "text": "Warum Kinder Mobilitätsbildung brauchen", "reach": 498, "inter": 20, "er": 4.02, "paid": false, "url": "https://www.linkedin.com/feed/update/urn:li:ugcPost:7433169697698680832"}], "delta": {"auf": 84.8, "auf_prev": 68559, "rei": 237.1, "rei_prev": 36457, "er": -0.26, "er_prev": 2.98, "fol": -8, "fol_pct": -0.1, "fol_prev": 11221, "prevname": "Januar"}}, "Mär": {"name": "März 2026", "aufrufe": {"ges": 414012, "ig": 130255, "fb": 276924, "li": 6833}, "reichweite": {"ges": 254330, "ig": 100961, "fb": 149293, "li": 4076}, "er": {"ig": 4.14, "fb": 0.75, "li": 4.73, "ges": 3.02, "n": 19}, "follower": {"ges": 11240, "fb": 6219, "ig": 3159, "li": 1862}, "posts": [{"c": "ig", "date": "03.03.", "text": "Kopf hoch, Handy weg – Ablenkung im Verkehr", "reach": 176, "inter": 7, "er": 3.98, "paid": false, "url": "https://www.instagram.com/p/DVbgwciDN7c/"}, {"c": "ig", "date": "06.03.", "text": "ADACUS zeigt: die Straße richtig überqueren", "reach": 400, "inter": 21, "er": 5.25, "paid": false, "url": "https://www.instagram.com/reel/DVjIym4jG8J/"}, {"c": "ig", "date": "10.03.", "text": "Kopfhörer im Verkehr – Risiko bleibt laut", "reach": 262, "inter": 9, "er": 3.44, "paid": false, "url": "https://www.instagram.com/p/DVtiVdUjEHm/"}, {"c": "ig", "date": "13.03.", "text": "Roller-Saison: fit mit dem Tretroller-Kartenset", "reach": 383, "inter": 17, "er": 4.44, "paid": false, "url": "https://www.instagram.com/p/DV1VmjMjAu6/"}, {"c": "ig", "date": "17.03.", "text": "Roller Fit: Bewegung stärkt Kinder", "reach": 155, "inter": 5, "er": 3.23, "paid": false, "url": "https://www.instagram.com/p/DV_fXC5jD7Y/"}, {"c": "ig", "date": "18.03.", "text": "Berlin lernt Leben retten – 5-Jahres-Kooperation", "reach": 15368, "inter": 735, "er": 4.78, "paid": false, "url": "https://www.instagram.com/reel/DWCNJ-hDGGC/"}, {"c": "ig", "date": "24.03.", "text": "Was macht ein Fahrrad verkehrssicher?", "reach": 237, "inter": 10, "er": 4.22, "paid": false, "url": "https://www.instagram.com/p/DWR1DFqjNOG/"}, {"c": "ig", "date": "31.03.", "text": "Frühjahrs-Check fürs Fahrrad", "reach": 236, "inter": 9, "er": 3.81, "paid": false, "url": "https://www.instagram.com/p/DWjpKMGjPBC/"}, {"c": "fb", "date": "03.03.", "text": "Kopf hoch, Handy weg", "reach": 153293, "inter": 45, "er": 0.03, "paid": true, "url": "https://www.facebook.com/1445304764310873/posts/1363274765847207"}, {"c": "fb", "date": "06.03.", "text": "ADACUS: die Straße richtig überqueren (Reel)", "reach": 227, "inter": 0, "er": 0.0, "paid": false, "url": "https://www.facebook.com/reel/1230242842652425/"}, {"c": "fb", "date": "10.03.", "text": "Kopfhörer im Verkehr", "reach": 130, "inter": 1, "er": 0.77, "paid": false, "url": "https://www.facebook.com/1445304764310873/posts/1368702778637739"}, {"c": "fb", "date": "13.03.", "text": "Roller-Saison startet", "reach": 207, "inter": 1, "er": 0.48, "paid": false, "url": "https://www.facebook.com/1445304764310873/posts/1371128675061816"}, {"c": "fb", "date": "17.03.", "text": "Roller Fit: Bewegung stärkt Kinder", "reach": 194, "inter": 1, "er": 0.52, "paid": false, "url": "https://www.facebook.com/1445304764310873/posts/1374310798076937"}, {"c": "fb", "date": "24.03.", "text": "Was macht ein Fahrrad verkehrssicher?", "reach": 189, "inter": 1, "er": 0.53, "paid": false, "url": "https://www.facebook.com/1445304764310873/posts/1380418847466132"}, {"c": "fb", "date": "31.03.", "text": "Frühjahrs-Check fürs Fahrrad", "reach": 171, "inter": 5, "er": 2.92, "paid": false, "url": "https://www.facebook.com/1445304764310873/posts/1386339000207450"}, {"c": "li", "date": "05.03.", "text": "Roller Fit wächst in Bonn", "reach": 1243, "inter": 38, "er": 3.06, "paid": false, "url": "https://www.linkedin.com/feed/update/urn:li:share:7437621610100166656"}, {"c": "li", "date": "11.03.", "text": "Tagung Nachhaltigkeitsbildung an der HU Berlin", "reach": 703, "inter": 31, "er": 4.41, "paid": false, "url": "https://www.linkedin.com/feed/update/urn:li:share:7439706364290949120"}, {"c": "li", "date": "12.03.", "text": "Berlin verankert Lebensrettung – 10.000 Leben", "reach": 4138, "inter": 214, "er": 5.17, "paid": false, "url": "https://www.linkedin.com/feed/update/urn:li:ugcPost:7440086566955409408"}, {"c": "li", "date": "21.03.", "text": "Kooperation mit Senatsverwaltung Berlin", "reach": 382, "inter": 24, "er": 6.28, "paid": false, "url": "https://www.linkedin.com/feed/update/urn:li:ugcPost:7443318895836504065"}], "delta": {"auf": 226.9, "auf_prev": 126663, "rei": 107.0, "rei_prev": 122891, "er": 0.3, "er_prev": 2.72, "fol": 27, "fol_pct": 0.2, "fol_prev": 11213, "prevname": "Februar"}}, "Apr": {"name": "April 2026", "aufrufe": {"ges": 263038, "ig": 98738, "fb": 160455, "li": 3845}, "reichweite": {"ges": 200313, "ig": 81506, "fb": 116226, "li": 2581}, "er": {"ig": 4.92, "fb": 0.72, "li": 2.39, "ges": 2.74, "n": 17}, "follower": {"ges": 11255, "fb": 6212, "ig": 3166, "li": 1877}, "posts": [{"c": "ig", "date": "03.04.", "text": "Wahr oder falsch – Tretroller-Edition", "reach": 186, "inter": 3, "er": 1.61, "paid": false, "url": "https://www.instagram.com/p/DWqlrbyjfD6/"}, {"c": "ig", "date": "07.04.", "text": "Weltgesundheitstag – im Notfall anfangen", "reach": 14527, "inter": 1035, "er": 7.12, "paid": false, "url": "https://www.instagram.com/reel/DW1hMyQI5IB/"}, {"c": "ig", "date": "09.04.", "text": "Anhalteweg erklärt – Programm „Achtung Auto\"", "reach": 256, "inter": 16, "er": 6.25, "paid": false, "url": "https://www.instagram.com/p/DW6lwz2jAd1/"}, {"c": "ig", "date": "24.04.", "text": "Was bleibt: Momente draußen statt Bildschirmzeit", "reach": 280, "inter": 11, "er": 3.93, "paid": false, "url": "https://www.instagram.com/reel/DXhJDcuBnin/"}, {"c": "ig", "date": "30.04.", "text": "Fahrrad-Parcours mit Alltagsgegenständen", "reach": 159, "inter": 9, "er": 5.66, "paid": false, "url": "https://www.instagram.com/p/DXwYFSkDFWE/"}, {"c": "fb", "date": "03.04.", "text": "Tretroller-Wissensquiz", "reach": 168, "inter": 4, "er": 2.38, "paid": false, "url": "https://www.facebook.com/1445304764310873/posts/1389000000000000"}, {"c": "fb", "date": "09.04.", "text": "Anhalteweg erklärt", "reach": 422, "inter": 2, "er": 0.47, "paid": false, "url": "https://www.facebook.com/1445304764310873/posts/1392000000000000"}, {"c": "fb", "date": "16.04.", "text": "Berlin lernt Leben retten (geboostet)", "reach": 108611, "inter": 20, "er": 0.02, "paid": true, "url": "https://www.facebook.com/1445304764310873/posts/1393680299473320"}, {"c": "fb", "date": "30.04.", "text": "Fahrrad-Parcours", "reach": 195, "inter": 0, "er": 0.0, "paid": false, "url": "https://www.facebook.com/1445304764310873/posts/1405960834911933"}, {"c": "li", "date": "07.04.", "text": "Reisesaison – Mobilität durchgängig", "reach": 230, "inter": 3, "er": 1.3, "paid": false, "url": "https://www.linkedin.com/feed/update/urn:li:share:7445483332152500224"}, {"c": "li", "date": "21.04.", "text": "Beitrag April II", "reach": 245, "inter": 5, "er": 2.04, "paid": false, "url": "https://www.linkedin.com/feed/update/urn:li:share:7450464915670130689"}, {"c": "li", "date": "21.04.", "text": "Beitrag April III", "reach": 214, "inter": 3, "er": 1.4, "paid": false, "url": "https://www.linkedin.com/feed/update/urn:li:share:7450534824458715136"}, {"c": "li", "date": "26.04.", "text": "Beitrag April IV", "reach": 113, "inter": 4, "er": 3.54, "paid": false, "url": "https://www.linkedin.com/feed/update/urn:li:share:7452314334770208769"}, {"c": "li", "date": "26.04.", "text": "Beitrag April V – starkes Echo", "reach": 1229, "inter": 43, "er": 3.5, "paid": false, "url": "https://www.linkedin.com/feed/update/urn:li:share:7452381484587347968"}, {"c": "li", "date": "29.04.", "text": "Beitrag April VI", "reach": 124, "inter": 3, "er": 2.42, "paid": false, "url": "https://www.linkedin.com/feed/update/urn:li:share:7453326210505519104"}, {"c": "li", "date": "29.04.", "text": "Beitrag April VII", "reach": 321, "inter": 12, "er": 3.74, "paid": false, "url": "https://www.linkedin.com/feed/update/urn:li:share:7454847596159762432"}, {"c": "li", "date": "30.04.", "text": "Beitrag April VIII", "reach": 1452, "inter": 17, "er": 1.17, "paid": false, "url": "https://www.linkedin.com/feed/update/urn:li:share:7455258816708960256"}], "delta": {"auf": -36.5, "auf_prev": 414012, "rei": -21.2, "rei_prev": 254330, "er": -0.28, "er_prev": 3.02, "fol": 15, "fol_pct": 0.1, "fol_prev": 11240, "prevname": "März"}}, "Mai": {"name": "Mai 2026", "aufrufe": {"ges": 560244, "ig": 133647, "fb": 421338, "li": 5259}, "reichweite": {"ges": 367911, "ig": 97109, "fb": 268814, "li": 1988}, "er": {"ig": 2.8, "fb": 0.92, "li": 3.46, "ges": 2.43, "n": 20}, "follower": {"ges": 11287, "fb": 6209, "ig": 3179, "li": 1899}, "posts": [{"c": "ig", "date": "04.05.", "text": "Straßenverkehr wird komplexer – Lehrkräftebefragung zur Mobilitätsbildung", "reach": 244, "inter": 12, "er": 4.92, "paid": false, "url": "https://www.instagram.com/p/DX7ED0rjOU8/"}, {"c": "ig", "date": "19.05.", "text": "Reisen mit Kindern – kleine Vorbereitungen, entspannter unterwegs", "reach": 272, "inter": 12, "er": 4.41, "paid": false, "url": "https://www.instagram.com/p/DYhtd1wlkWj/"}, {"c": "ig", "date": "16.05.", "text": "Gen Z Mobilität: pragmatisch, selbstbestimmt, vielfältig", "reach": 211, "inter": 8, "er": 3.79, "paid": false, "url": "https://www.instagram.com/p/DYY_A9wDsUg/"}, {"c": "ig", "date": "14.05.", "text": "Regen am Vatertag? Kein Grund, zuhause zu bleiben", "reach": 114, "inter": 3, "er": 2.63, "paid": false, "url": "https://www.instagram.com/p/DYTzqIpjLxP/"}, {"c": "ig", "date": "28.05.", "text": "Schulweg gemeinsam kennenlernen – für künftige Erstklässler", "reach": 185, "inter": 4, "er": 2.16, "paid": false, "url": "https://www.instagram.com/p/DY43JtbjGEc/"}, {"c": "ig", "date": "09.05.", "text": "Fahrradfreundlich? Der Check aus Kinderperspektive", "reach": 149, "inter": 3, "er": 2.01, "paid": false, "url": "https://www.instagram.com/p/DYHEW2lATpP/"}, {"c": "ig", "date": "29.05.", "text": "Mit Rad, Lastenrad oder Anhänger – sicher starten", "reach": 133, "inter": 2, "er": 1.5, "paid": false, "url": "https://www.instagram.com/p/DY7UahcFnnU/"}, {"c": "ig", "date": "21.05.", "text": "Mobilität bedeutet Teilhabe (Reel)", "reach": 211, "inter": 2, "er": 0.95, "paid": false, "url": "https://www.instagram.com/reel/DYmzFRoIV37/"}, {"c": "fb", "date": "04.05.", "text": "Straßenverkehr wird komplexer – Lehrkräftebefragung", "reach": 585, "inter": 8, "er": 1.37, "paid": false, "url": "https://www.facebook.com/1445304764310873/posts/1414954500679233"}, {"c": "fb", "date": "10.05.", "text": "Muttertag – Danke an alle, die Kinder begleiten", "reach": 162, "inter": 2, "er": 1.23, "paid": false, "url": "https://www.facebook.com/1445304764310873/posts/1419806670194016"}, {"c": "fb", "date": "28.05.", "text": "Schulweg gemeinsam kennenlernen", "reach": 181, "inter": 2, "er": 1.1, "paid": false, "url": "https://www.facebook.com/1445304764310873/posts/1435653775275972"}, {"c": "fb", "date": "14.05.", "text": "Regen am Vatertag?", "reach": 100, "inter": 1, "er": 1.0, "paid": false, "url": "https://www.facebook.com/1445304764310873/posts/1423209666520383"}, {"c": "fb", "date": "16.05.", "text": "Gen Z Mobilität: mehr als von A nach B", "reach": 121, "inter": 1, "er": 0.83, "paid": false, "url": "https://www.facebook.com/1445304764310873/posts/1424925473015469"}, {"c": "fb", "date": "21.05.", "text": "Mobilität bedeutet Teilhabe (Reel, beworben)", "reach": 14564, "inter": 0, "er": 0.0, "paid": true, "url": "https://www.facebook.com/reel/2242261899844757/"}, {"c": "li", "date": "04.05.", "text": "Lehrkräftebefragung: Kinder brauchen mehr Mobilitätsbildung", "reach": 366, "inter": 22, "er": 6.01, "paid": false, "url": "https://www.linkedin.com/feed/update/urn:li:share:7457101927131267072"}, {"c": "li", "date": "26.05.", "text": "MobiCon 2026 – Partner des TÜV-Verband", "reach": 238, "inter": 9, "er": 3.78, "paid": false, "url": "https://www.linkedin.com/feed/update/urn:li:share:7465033723206565888"}, {"c": "li", "date": "13.05.", "text": "Junge Menschen in Planungsprozesse einbeziehen", "reach": 275, "inter": 9, "er": 3.27, "paid": false, "url": "https://www.linkedin.com/feed/update/urn:li:share:7460224494306197504"}, {"c": "li", "date": "05.05.", "text": "Reisesaison: Mobilität durchgängig", "reach": 279, "inter": 8, "er": 2.87, "paid": false, "url": "https://www.linkedin.com/feed/update/urn:li:share:7457453848866004992"}, {"c": "li", "date": "15.05.", "text": "Gen Z Mobilität: pragmatisch und selbstbestimmt", "reach": 558, "inter": 14, "er": 2.51, "paid": false, "url": "https://www.linkedin.com/feed/update/urn:li:ugcPost:7461058491798106112"}, {"c": "li", "date": "20.05.", "text": "Lehrkräfte-Rückmeldungen: konkrete Schritte", "reach": 215, "inter": 5, "er": 2.33, "paid": false, "url": "https://www.linkedin.com/feed/update/urn:li:share:7462850404918411265"}], "delta": {"auf": 113.0, "auf_prev": 263038, "rei": 83.7, "rei_prev": 200313, "er": -0.31, "er_prev": 2.74, "fol": 32, "fol_pct": 0.3, "fol_prev": 11255, "prevname": "April"}}, "Jun": {"name": "Juni 2026", "aufrufe": {"ges": 383314, "ig": 152693, "fb": 222256, "li": 8365}, "reichweite": {"ges": 387248, "ig": 178598, "fb": 203419, "li": 5231}, "er": {"ig": 3.7, "fb": 0.62, "li": 3.87, "ges": 2.88, "n": 14}, "follower": {"ges": 11355, "fb": 6200, "ig": 3196, "li": 1959}, "posts": [{"c": "ig", "date": "03.06.", "text": "Sommerferien voraus: entspannt und sicher unterwegs", "reach": 156, "inter": 6, "er": 3.85, "paid": false, "url": "https://www.instagram.com/p/DZIQdrdlmb7/"}, {"c": "ig", "date": "14.06.", "text": "Ferienstart: Kinder sicher im Straßenverkehr begleiten", "reach": 5838, "inter": 156, "er": 2.67, "paid": false, "url": "https://www.instagram.com/p/DZjqD7VjbMK/"}, {"c": "ig", "date": "15.06.", "text": "Hitze im Auto unterschätzt – worauf Familien achten sollten", "reach": 3961, "inter": 26, "er": 0.66, "paid": false, "url": "https://www.instagram.com/p/DZnFKMBDGNl/"}, {"c": "ig", "date": "24.06.", "text": "Fahrrad-Check vor der großen Sommertour", "reach": 343, "inter": 32, "er": 9.33, "paid": false, "url": "https://www.instagram.com/p/DZ-VPtAjPnn/"}, {"c": "ig", "date": "29.06.", "text": "Sommer, Sonne, sicher rollen (Reel)", "reach": 251, "inter": 5, "er": 1.99, "paid": false, "url": "https://www.instagram.com/reel/DaLI65xo7Lg/"}, {"c": "fb", "date": "03.06.", "text": "Sommerferien voraus – sicher unterwegs", "reach": 106, "inter": 0, "er": 0.0, "paid": false, "url": "https://www.facebook.com/1445304764310873/posts/1441074664733883"}, {"c": "fb", "date": "14.06.", "text": "Ferienstart: Kinder sicher begleiten (beworben)", "reach": 184496, "inter": 16, "er": 0.01, "paid": true, "url": "https://www.facebook.com/1445304764310873/posts/1450495857125097"}, {"c": "fb", "date": "15.06.", "text": "Hitze im Auto unterschätzt", "reach": 117, "inter": 1, "er": 0.85, "paid": false, "url": "https://www.facebook.com/1445304764310873/posts/1451692613672088"}, {"c": "fb", "date": "24.06.", "text": "Fahrrad-Check vor der Sommertour", "reach": 312, "inter": 5, "er": 1.6, "paid": false, "url": "https://www.facebook.com/1445304764310873/posts/1459433509564665"}, {"c": "li", "date": "11.06.", "text": "Mobilitätsbildung als gesellschaftliche Aufgabe", "reach": 665, "inter": 24, "er": 3.61, "paid": false, "url": "https://www.linkedin.com/feed/update/urn:li:ugcPost:7470843064547168257"}, {"c": "li", "date": "15.06.", "text": "Kinder stärken: Ergebnisse aus der Praxis", "reach": 4173, "inter": 154, "er": 3.69, "paid": false, "url": "https://www.linkedin.com/feed/update/urn:li:share:7472299081176936449"}, {"c": "li", "date": "18.06.", "text": "Verkehrssicherheit beginnt in der Schule", "reach": 1882, "inter": 72, "er": 3.83, "paid": false, "url": "https://www.linkedin.com/feed/update/urn:li:ugcPost:7473393357189287937"}, {"c": "li", "date": "24.06.", "text": "Sommerreise: Mobilität durchgängig denken", "reach": 1754, "inter": 51, "er": 2.91, "paid": false, "url": "https://www.linkedin.com/feed/update/urn:li:ugcPost:7475575191516086272"}, {"c": "li", "date": "29.06.", "text": "Rückblick Halbjahr: was Kinder mobil hält", "reach": 359, "inter": 19, "er": 5.29, "paid": false, "url": "https://www.linkedin.com/feed/update/urn:li:ugcPost:7477355570472280064"}], "delta": {"auf": -31.6, "auf_prev": 560244, "rei": 5.3, "rei_prev": 367911, "er": 0.45, "er_prev": 2.43, "fol": 68, "fol_pct": 0.6, "fol_prev": 11287, "prevname": "Mai"}}, "Jul": {"name": "Juli 2026", "aufrufe": {"ges": 122839, "ig": 58151, "fb": 60440, "li": 4248}, "reichweite": {"ges": 58807, "ig": 23802, "fb": 32682, "li": 2323}, "er": {"ig": 5.48, "fb": 1.25, "li": 3.62, "ges": 3.46, "n": 19}, "follower": {"ges": 11373, "fb": 6197, "ig": 3204, "li": 1972}, "posts": [{"c": "ig", "date": "03.07.", "text": "Roller Fit: Bewegung und Mobilitätsbildung im Unterricht verbinden", "reach": 441, "inter": 30, "er": 6.8, "paid": false, "url": "https://www.instagram.com/p/DaUm1gsjxz8/"}, {"c": "ig", "date": "17.07.", "text": "Reisespiele zum Download – gegen Langeweile auf der Urlaubsfahrt", "reach": 290, "inter": 18, "er": 6.21, "paid": false, "url": "https://www.instagram.com/reel/Da5j2__ow3G/"}, {"c": "ig", "date": "21.07.", "text": "10.000 Leben jährlich – habt keine Angst zu helfen", "reach": 15307, "inter": 799, "er": 5.22, "paid": false, "url": "https://www.instagram.com/reel/DbDvbM-o6D7/"}, {"c": "ig", "date": "23.07.", "text": "POV Helmfrisur – Team Helm oder Team „nicht so schlimm\"?", "reach": 250, "inter": 19, "er": 7.6, "paid": false, "url": "https://www.instagram.com/p/DbIqHERRb7o/"}, {"c": "ig", "date": "24.07.", "text": "Allein zur Schule: den Weg in den Ferien gemeinsam üben", "reach": 329, "inter": 16, "er": 4.86, "paid": false, "url": "https://www.instagram.com/reel/DbK-dKURpSN/"}, {"c": "ig", "date": "30.07.", "text": "Herzdruckmassage im Takt – 100 bis 120 Beats pro Minute", "reach": 1505, "inter": 33, "er": 2.19, "paid": false, "url": "https://www.instagram.com/reel/DbbDepSAuxF/"}, {"c": "fb", "date": "03.07.", "text": "Roller Fit: Bewegung und Mobilitätsbildung verbinden", "reach": 123, "inter": 2, "er": 1.63, "paid": false, "url": "https://www.facebook.com/1445304764310873/posts/1467250032116346"}, {"c": "fb", "date": "07.07.", "text": "200 Multiplikatoren für den Reanimationsunterricht in Bayern", "reach": 272, "inter": 5, "er": 1.84, "paid": false, "url": "https://www.facebook.com/1445304764310873/posts/1471276885046994"}, {"c": "fb", "date": "17.07.", "text": "Reisespiele zum Download (Reel, beworben)", "reach": 1413, "inter": 2, "er": 0.14, "paid": true, "url": "https://www.facebook.com/reel/857570890521931/"}, {"c": "fb", "date": "21.07.", "text": "10.000 Leben jährlich – ins Tun kommen (Reel)", "reach": 824, "inter": 9, "er": 1.09, "paid": false, "url": "https://www.facebook.com/reel/1404185911575156/"}, {"c": "fb", "date": "23.07.", "text": "POV Helmfrisur", "reach": 163, "inter": 2, "er": 1.23, "paid": false, "url": "https://www.facebook.com/1445304764310873/posts/1484910440350305"}, {"c": "fb", "date": "30.07.", "text": "Herzdruckmassage im Takt (Reel)", "reach": 437, "inter": 7, "er": 1.6, "paid": false, "url": "https://www.facebook.com/reel/1350940723852213/"}, {"c": "li", "date": "02.07.", "text": "Roller Fit: Fortbildung, Materialien und Klassensätze für Grundschulen", "reach": 298, "inter": 20, "er": 6.71, "paid": false, "url": "https://www.linkedin.com/feed/update/urn:li:ugcPost:7478505864681644033"}, {"c": "li", "date": "07.07.", "text": "Referententreffen Bayern: 200 Multiplikatoren für Reanimationsunterricht", "reach": 589, "inter": 38, "er": 6.45, "paid": false, "url": "https://www.linkedin.com/feed/update/urn:li:ugcPost:7480287676760322048"}, {"c": "li", "date": "09.07.", "text": "Lunchbreak-Webseminar mit SINUS zur Mobilität der Gen Z", "reach": 187, "inter": 7, "er": 3.74, "paid": false, "url": "https://www.linkedin.com/feed/update/urn:li:share:7480867205287682048"}, {"c": "li", "date": "10.07.", "text": "Autonomer ÖPNV wird relevant, wo er konkrete Lücken schließt", "reach": 215, "inter": 6, "er": 2.79, "paid": false, "url": "https://www.linkedin.com/feed/update/urn:li:ugcPost:7481385847301275648"}, {"c": "li", "date": "21.07.", "text": "NextGen-Studie: nur 10 % sehen sich in Politik und Gesellschaft gehört", "reach": 208, "inter": 4, "er": 1.92, "paid": false, "url": "https://www.linkedin.com/feed/update/urn:li:ugcPost:7485261076641607680"}, {"c": "li", "date": "27.07.", "text": "Gesundheitspartnerschaft mit der KKH: Roller Fit wird ausgebaut", "reach": 920, "inter": 30, "er": 3.26, "paid": false, "url": "https://www.linkedin.com/feed/update/urn:li:ugcPost:7487472057430032385"}, {"c": "li", "date": "27.07.", "text": "Mobilitätsgerechtigkeit: Ausbildung muss erreichbar sein", "reach": 816, "inter": 4, "er": 0.49, "paid": false, "url": "https://www.linkedin.com/feed/update/urn:li:share:7487542632097865728"}], "delta": {"auf": -68.0, "auf_prev": 383314, "rei": -84.8, "rei_prev": 387248, "er": 0.58, "er_prev": 2.88, "fol": 18, "fol_pct": 0.2, "fol_prev": 11355, "prevname": "Juni"}}};
+const INSIGHTS = {"Jan": {"good": [["Instagram mit starkem organischem Auftakt.", "Ø 5,09 % Engagement-Rate – der höchste Monatswert des Jahres. Der Reanimations-Beitrag (21.1.) stach mit 24 Likes und 12 geteilten Inhalten heraus."], ["Organischer Facebook-Erfolg ohne Budget.", "Der Beitrag zu den neuen Reanimationsleitlinien (17.1.) erreichte 42.887 Aufrufe – vollständig organisch. Ein seltener viraler Moment, der zeigt, welche Themen Resonanz erzeugen."], ["LinkedIn mit reichweitenstärkstem Fachbeitrag.", "Die Reanimationsleitlinien (16.1.) erzielten 5.360 Aufrufe – das Thema Lebensrettung trägt über alle Kanäle."]], "bad": [["Reichweite insgesamt noch niedrig.", "Mit 68.559 Aufrufen ist Januar der schwächste Monat – die Aktivität lag vor dem Start der neuen Social-Strategie und vor den Paid-Kampagnen."], ["Facebook organisch noch ausbaufähig.", "Außerhalb des viralen Reanimations-Beitrags blieben die FB-Beiträge im niedrigen dreistelligen Bereich."]], "reco": [["Reanimations- und Lebensrettungs-Themen weiterführen.", "Sie erzeugten kanalübergreifend das stärkste Echo – ein klarer inhaltlicher Anker."], ["Organische Viral-Mechanik analysieren.", "Der FB-Beitrag vom 17.1. lief ohne Budget außergewöhnlich gut – Format und Ansprache als Vorlage prüfen."]]}, "Feb": {"good": [["Instagram bleibt stark.", "Ø 4,15 % Engagement-Rate. Der Beitrag zur Fahrradprüfung (10.2.) führte mit 15 Likes bei kompakter Reichweite."], ["Reichweite deutlich gewachsen.", "126.663 Aufrufe – fast eine Verdopplung gegenüber Januar, getragen vom Start der Facebook-Kampagnen."], ["LinkedIn-Fachbeitrag zur Mobilitätsbildung.", "Der Grundsatzbeitrag „Warum Kinder Mobilitätsbildung brauchen\" (21.2.) überzeugte mit 19 Likes."]], "bad": [["Erster großer Paid-Beitrag verzerrt das Bild.", "Das Verkehrssituationen-Quiz (17.2.) kam auf 135.537 Aufrufe, davon nur 389 organisch – praktisch vollständig beworben."], ["LinkedIn-Aufrufe auffällig niedrig.", "Mit 2.203 lag LinkedIn deutlich unter den Nachbarmonaten – Wert stammt aus dem internen Tool und ist nicht final gegen LinkedIn Analytics geprüft."]], "reco": [["Paid-Beiträge klar als solche kennzeichnen.", "Damit die organische Leistung sichtbar bleibt und nicht von Kampagnen überlagert wird."], ["Mobilitätsbildung als LinkedIn-Leitthema setzen.", "Der Fachbeitrag zeigt, dass die berufliche Zielgruppe auf Haltungsthemen anspringt."]]}, "Mär": {"good": [["Bislang stärkster Monat bei der Reichweite.", "414.012 Aufrufe – getragen von einem viralen Instagram-Reel und hoher Facebook-Sichtbarkeit."], ["Instagram-Reel zur Berlin-Kooperation.", "Das Reel zur 5-Jahres-Reanimationskooperation (18.3.) erreichte 15.368 Personen mit 653 Likes – der organische Top-Beitrag des Jahres."], ["LinkedIn überzeugt mit Haltung.", "Ø 4,73 % Engagement-Rate. Der Berlin-Beitrag (12.3.) erzielte 203 Likes bei 4.138 Aufrufen."]], "bad": [["Facebook erneut stark paid-getrieben.", "Der „Kopf hoch, Handy weg\"-Beitrag (3.3.) kam auf 153.293 Aufrufe, davon nur 484 organisch."], ["Engagement-Rate Facebook niedrig.", "Mit Ø 0,72 % blieb FB unter dem Zielwert – die hohe Sichtbarkeit übersetzt sich nicht in Interaktion."]], "reco": [["Reel-Format gezielt ausbauen.", "Das Berlin-Reel zeigt das organische Potenzial bewegter Formate – Frequenz erhöhen."], ["Emotionale Lebensretter-Geschichten priorisieren.", "Sie erzeugen die stärkste organische Resonanz über alle Kanäle."]]}, "Apr": {"good": [["Instagram mit viralem Weltgesundheitstag-Reel.", "Das Reel (7.4.) erreichte 14.527 Personen mit 993 Likes – erneut zeigt sich die Kraft emotionaler Lebensretter-Themen."], ["Hohe Engagement-Rate auf Instagram.", "Ø 4,92 % – der stärkste Kanal des Monats, getragen von alltagsnahen und emotionalen Inhalten."]], "bad": [["Reichweite rückläufig nach März.", "263.038 Aufrufe – ein Rückgang gegenüber dem starken März, vor allem durch weniger Facebook-Kampagnenvolumen."], ["Facebook-Engagement weiter niedrig.", "Ø 0,72 %. Der geboostete Berlin-Beitrag (16.4.) brachte Reichweite, aber kaum Interaktion."]], "reco": [["Emotionale Reels als festes Format etablieren.", "Zwei virale Reels in Folge (März, April) belegen ein wiederholbares Muster."], ["Instagram-Frequenz halten.", "Bestes organisches Verhältnis – die inhaltliche Richtung stimmt."]]}, "Mai": {"good": [["LinkedIn überzeugt qualitativ.", "Mit Ø 3,46 % Engagement-Rate ist LinkedIn im Mai der stärkste Kanal. Fachlich-haltige Inhalte – allen voran die Lehrkräftebefragung (366 Aufrufe, 22 Interaktionen) – treffen die berufliche Zielgruppe besonders gut."], ["Instagram bleibt der organische Motor.", "8 Beiträge, Ø 2,80 % Engagement-Rate – deutlich über dem Zielwert von 1,0 %. Alltagsnahe Familienthemen wie „Reisen mit Kindern\" (4,41 %) führen das Feld an."], ["Hohe Gesamtsichtbarkeit.", "560.244 Aufrufe über alle Kanäle – getragen von der laufenden Facebook-Kampagne."]], "bad": [["Facebooks Reichweite ist kampagnen-, nicht organisch getrieben.", "Die 268.814 Betrachter enthalten ausdrücklich auch Werbeanzeigen. Organisch erreichen die FB-Beiträge nur niedrige dreistellige Werte."], ["Das reichweitenstärkste FB-Reel war geboostet.", "„Mobilität bedeutet Teilhabe\" kam auf 14.564 Aufrufe, davon nur 1.561 organisch – und erzielte trotz Budget keine Interaktionen."], ["Reichweite pro Instagram-Beitrag ist niedrig.", "(114–272). Die hohe Account-Reichweite entsteht stärker über durchlaufende Inhalte als über einzelne Posts."]], "reco": [["LinkedIn als Fachkanal ausbauen.", "Studien- und Befragungsergebnisse erzeugen das stärkste Echo – Taktung konsequent erhöhen."], ["Instagram-Frequenz halten.", "Bestes organisches Verhältnis aller Kanäle. Alltagsnahe Familien- und Reisethemen weiter priorisieren."], ["Engagement-stärkste Formate priorisieren.", "Karussells mit konkretem Alltagsbezug (Schulweg, Reisevorbereitung) schneiden überdurchschnittlich ab."], ["Facebook organisch vs. bezahlt klar trennen.", "Künftig die organische FB-Leistung separat ausweisen."]]}, "Jun": {"good": [["LinkedIn ist der Engagement-Champion des Monats.", "Ø 3,87 % Engagement-Rate – der stärkste Kanal im Juni. Fachlich-haltige Beiträge treffen die berufliche Zielgruppe zuverlässig, der Beitrag vom 18.6. führt mit deutlichem Abstand."], ["Instagram bleibt organisch stark.", "Ø 3,70 % Engagement-Rate, klar über dem Zielwert. Der Ferienstart-Beitrag (14.6.) verband hohe Reichweite mit solider Interaktion – Familienthemen mit Alltagsbezug ziehen weiter."], ["Follower-Wachstum zieht spürbar an.", "Der Netto-Zuwachs im Juni übertrifft nahezu das gesamte bisherige Halbjahr, getragen von LinkedIn. Der Zielfortschritt verdoppelt sich damit auf rund 8 %."]], "bad": [["Facebook-Reichweite bleibt kampagnengetrieben.", "Die hohe Sichtbarkeit stammt fast vollständig aus dem beworbenen Beitrag vom 14.6.; organisch bewegen sich die FB-Posts im niedrigen dreistelligen Bereich. Die apparente Viralität deckt sich exakt mit den Kampagnentagen."], ["Instagram-Aufrufe teilweise nicht postgenau zuordenbar.", "Die Tagesreichweite zeigt Mitte Juni zwei deutliche Spitzen, die die erfassten Beiträge nicht vollständig erklären. Ein reichweitenstarker Beitrag ist im Datenabzug derzeit nicht enthalten und wird nachgezogen."], ["LinkedIn-Aufrufe noch unter Vorbehalt.", "Der Monatswert wird final gegen LinkedIn Analytics abgeglichen; kleinere Anpassungen sind möglich."]], "reco": [["LinkedIn-Taktung weiter erhöhen.", "Der Kanal liefert konstant die beste Interaktionsqualität – Studien- und Praxisthemen konsequent priorisieren."], ["Instagram-Frequenz im Ferienzeitraum halten.", "Familien- und Reisethemen mit Alltagsbezug tragen das organische Wachstum – die Richtung stimmt."], ["Organische FB-Leistung separat ausweisen.", "Damit die bezahlte Reichweite die organische Entwicklung nicht überdeckt."], ["Datenabgleich Instagram und LinkedIn finalisieren.", "Fehlenden IG-Beitrag ergänzen und LI-Aufrufe gegen Analytics bestätigen."]]}, "Jul": {"good": [["Instagram erreicht den stärksten Engagement-Monat des Jahres.", "Ø 5,22 % Engagement-Rate über alle sechs Beiträge – deutlich über dem Zielwert von 1,0 % und höher als in jedem Monat seit Januar."], ["Das Reanimations-Reel ist der Top-Beitrag des Monats.", "15.243 erreichte Personen und 777 Interaktionen (21.7.) – der stärkste eigene Beitrag seit dem Berlin-Reel im März und einer der drei stärksten des Jahres."], ["LinkedIn bleibt qualitativ verlässlich.", "Ø 3,62 % Engagement-Rate. Roller Fit (2.7.) und das Referententreffen in Bayern (7.7.) liegen beide über 6 % – Programm- und Praxisthemen tragen den Kanal."], ["Die neuen Formate ab Monatsmitte zeigen früh Wirkung.", "Das POV-Format (23.7.) erreicht mit 7,60 % die höchste Engagement-Rate des Monats über alle drei Kanäle. Das Challenge-Reel (30.7.) hält im Schnitt 17,8 Sekunden Wiedergabezeit – mehr als das Doppelte jedes anderen Reels – und kam damit in vier Tagen ohne Budget auf 1.505 erreichte Personen. Als erste Einschätzung: Beide Formate tragen organisch. Für eine belastbare Bewertung ist die Standzeit noch zu kurz, wir ziehen die Werte Mitte August nach."], ["Follower-Wachstum setzt sich fort.", "LinkedIn legt erneut zu, Instagram wächst mit. Der Zielfortschritt steigt damit auf rund 9 %."]], "bad": [["Facebook bleibt fast vollständig kampagnengetrieben.", "Von 60.440 Aufrufen entfallen 57.322 auf bezahlte Auslieferung, rund 95 %. Organisch bleiben 3.118. Die Kampagne lief den gesamten Monat durch, ihre Auslieferung bricht jedoch am 14.7. von rund 4.000 auf wenige Hundert Aufrufe pro Tag ein. Der Rückgang gegenüber Juni ist damit ein Auslieferungseffekt und keine Veränderung der organischen Leistung."], ["Bezahlte Auslieferung erzeugt kaum Interaktion.", "Das Reisespiele-Reel (17.7.) war der einzige beworbene Beitrag des Monats. Auf Facebook stehen 1.413 Aufrufen zwei Interaktionen gegenüber, eine Rate von 0,14 %. Organisch erzielte derselbe Inhalt auf Instagram 6,21 %."], ["Außerhalb der Reels bleibt die Reichweite pro Instagram-Beitrag klein.", "Zwischen 249 und 441 Personen. Die hohe Monatsreichweite entsteht nahezu vollständig über das Reanimations-Reel vom 21.7."], ["Ein Teil der Instagram-Aufrufe ist nicht beitragsgenau zuordenbar.", "Am 7. und 8.7. entstehen rund 26.000 Aufrufe, die die eigenen Beiträge nicht erklären – naheliegend ist ein gemeinsamer Beitrag mit einem Partnerkanal. Der Abgleich läuft; ebenso wird der LinkedIn-Monatswert final gegen LinkedIn Analytics bestätigt."]], "reco": [["Reanimation als Leitthema weiterführen.", "Zwei der drei stärksten Beiträge des Monats greifen es auf. Über alle sieben Monate ist es das kanalübergreifend zuverlässigste Thema."], ["Challenge- und POV-Format weiterfahren, Aufforderung anpassen.", "Beide Formate stellen eine direkte Frage, erhalten auf Instagram aber keine Kommentare. Stattdessen entstehen geteilte Inhalte und gespeicherte Beiträge. Die Handlungsaufforderung entsprechend auf Teilen oder Speichern ausrichten statt auf Kommentare."], ["Reel-Frequenz auf Instagram halten.", "Alle vier Reels des Monats lagen über dem Zielwert. Das Format trägt Reichweite und Interaktion gleichzeitig – als feste Taktung einplanen."], ["Facebook-Budgeteinsatz hinterfragen.", "Beworbene Facebook-Beiträge erzeugen Sichtbarkeit, aber praktisch keine Interaktion. Zu prüfen ist, ob dasselbe Budget auf Instagram oder als LinkedIn-Kampagne mehr Wirkung erzielt."], ["Follower-Wachstum über LinkedIn skalieren.", "Das Wachstum entsteht derzeit fast ausschließlich dort. Reichweitenstarke Fachbeiträge konsequent mit Follow-Anlässen verbinden."]]}};
+const MKEYS = ['Jan','Feb','Mär','Apr','Mai','Jun','Jul'];
+let CURRENT = 'Jul';
+let POSTFILTER = 'all';
+
+const CHAN_LBL = {ig:'Instagram',fb:'Facebook',li:'LinkedIn'};
+const nf = n => n.toLocaleString('de-DE');
+const pf = n => n.toFixed(2).replace('.',',');
+
+/* ---- KPI-Kacheln ---- */
+function renderKPIs(){
+  const d = MONTHLY[CURRENT];
+  const dl = d.delta;
+  const a=d.aufrufe, r=d.reichweite, e=d.er, f=d.follower;
+  function delta(html){ return dl ? html : '<div class="k-sub" style="margin-top:6px">Erster Berichtsmonat – kein Vormonat</div>'; }
+  let aufD='', reiD='', erD='', folD='';
+  if(dl){
+    const up=v=>v>=0;
+    aufD=`<div class="delta ${up(dl.auf)?'up':'down'}">${up(dl.auf)?'▲':'▼'} ${dl.auf>=0?'+':''}${pf(dl.auf)} % ggü. ${dl.prevname} (${nf(dl.auf_prev)})</div>`;
+    reiD=`<div class="delta ${up(dl.rei)?'up':'down'}">${up(dl.rei)?'▲':'▼'} ${dl.rei>=0?'+':''}${pf(dl.rei)} % ggü. ${dl.prevname} (${nf(dl.rei_prev)})</div>`;
+    erD=`<div class="delta ${up(dl.er)?'up':'down'}">${up(dl.er)?'▲':'▼'} ${dl.er>=0?'+':''}${pf(dl.er)} pp ggü. ${dl.prevname} (${pf(dl.er_prev)} %)</div>`;
+    folD=`<div class="delta ${up(dl.fol)?'up':'down'}">${up(dl.fol)?'▲':'▼'} ${dl.fol>=0?'+':''}${dl.fol} (${dl.fol_pct>=0?'+':''}${pf(dl.fol_pct)} %) ggü. ${dl.prevname}</div>`;
+  }
+  document.getElementById('kpis').innerHTML = `
+    <div class="kpi">
+      <div class="k-lbl">Aufrufe gesamt</div>
+      <div class="k-val">${nf(a.ges)}</div>
+      ${aufD}
+      <div class="k-sub">Impressions inkl. Wiederholungen &amp; Paid</div>
+      <div class="chanrow">
+        <div class="c ig"><b>${nf(a.ig)}</b><span>Instagram</span></div>
+        <div class="c fb"><b>${nf(a.fb)}</b><span>Facebook</span></div>
+        <div class="c li"><b>${nf(a.li)}</b><span>LinkedIn</span></div>
+      </div>
+    </div>
+    <div class="kpi">
+      <div class="k-lbl">Reichweite</div>
+      <div class="k-val">${nf(r.ges)}</div>
+      ${reiD}
+      <div class="k-sub">Eindeutige Personen · pro Kanal getrennt gemessen</div>
+      <div class="chanrow">
+        <div class="c ig"><b>${nf(r.ig)}</b><span>Instagram</span></div>
+        <div class="c fb"><b>${nf(r.fb)}</b><span>Facebook</span></div>
+        <div class="c li"><b>${nf(r.li)}</b><span>LinkedIn</span></div>
+      </div>
+    </div>
+    <div class="kpi">
+      <div class="k-lbl">Engagement-Rate</div>
+      <div class="k-val">${pf(e.ges)} %</div>
+      ${erD}
+      <div class="k-sub">Ø über alle ${e.n} Beiträge</div>
+      <div class="chanrow">
+        <div class="c ig"><b>${pf(e.ig)}%</b><span>Instagram</span></div>
+        <div class="c fb"><b>${pf(e.fb)}%</b><span>Facebook</span></div>
+        <div class="c li"><b>${pf(e.li)}%</b><span>LinkedIn</span></div>
+      </div>
+    </div>
+    <div class="kpi">
+      <div class="k-lbl">Follower gesamt</div>
+      <div class="k-val">${nf(f.ges)}</div>
+      ${folD}
+      <div class="k-sub">Stand Monatsende</div>
+      <div class="chanrow">
+        <div class="c fb"><b>${nf(f.fb)}</b><span>Facebook</span></div>
+        <div class="c ig"><b>${nf(f.ig)}</b><span>Instagram</span></div>
+        <div class="c li"><b>${nf(f.li)}</b><span>LinkedIn</span></div>
+      </div>
+    </div>`;
+}
+
+/* ---- Top-Posts ---- */
+function renderPosts(){
+  let list = MONTHLY[CURRENT].posts.filter(p=> POSTFILTER==='all'?true:p.c===POSTFILTER);
+  list = list.slice().sort((a,b)=> b.er-a.er).slice(0,5);
+  document.getElementById('posts').innerHTML = list.map((p,i)=>`
+    <a class="post" href="${p.url}" target="_blank" rel="noopener">
+      <div class="rank">${i+1}</div>
+      <div class="meta">
+        <span class="badge ${p.c}">${CHAN_LBL[p.c]}</span>${p.paid?'<span class="badge paid">Beworben</span>':''}
+        <div class="ptext">${p.text}</div>
+        <div class="pdate">${p.date}2026 · Beitrag öffnen ↗</div>
+      </div>
+      <div class="stats">
+        <div class="s"><b>${nf(p.reach)}</b>${p.c==='ig'?'Reichweite':'Aufrufe'}</div>
+        <div class="s"><b>${p.inter}</b>Interakt.</div>
+        <div class="s hl"><b>${pf(p.er)}%</b>Eng.-Rate</div>
+      </div>
+    </a>`).join('');
+}
+function filterPosts(c,btn){
+  POSTFILTER=c;
+  document.querySelectorAll('.chanfilter button[data-c]').forEach(b=>b.classList.remove('active'));
+  btn.classList.add('active');
+  renderPosts();
+}
+
+/* ---- Erkenntnisse + Empfehlungen ---- */
+function renderInsights(){
+  const ins = INSIGHTS[CURRENT];
+  const li = arr => arr.map(x=>`<li><b>${x[0]}</b> ${x[1]}</li>`).join('');
+  document.getElementById('ins-good').innerHTML = li(ins.good);
+  document.getElementById('ins-bad').innerHTML = li(ins.bad);
+  document.getElementById('reco-list').innerHTML = ins.reco.map(x=>`<li><b>${x[0]}</b> ${x[1]}</li>`).join('');
+  const nextM = {'Jan':'Februar','Feb':'März','Mär':'April','Apr':'Mai','Mai':'Juni','Jun':'Juli','Jul':'August'}[CURRENT];
+  document.getElementById('reco-title').textContent = 'Empfehlungen für '+nextM;
+}
+
+/* ---- Monatswechsel ---- */
+function selectMonth(key){
+  CURRENT = key;
+  POSTFILTER='all';
+  document.querySelectorAll('.chanfilter button[data-c]').forEach(b=>b.classList.toggle('active',b.dataset.c==='all'));
+  renderKPIs(); renderPosts(); renderInsights();
+}
+
+/* Aufrufe-Balken (gestapelt) – Jan–Juli */
+const AUFRUFE = [
+  {m:'Jan',ig:20353,fb:40085,li:8121},
+  {m:'Feb',ig:44194,fb:80266,li:2203},
+  {m:'Mär',ig:130255,fb:276924,li:6833},
+  {m:'Apr',ig:98738,fb:160455,li:3845},
+  {m:'Mai',ig:133647,fb:421338,li:5259},
+  {m:'Jun',ig:152693,fb:222256,li:8365},
+  {m:'Jul',ig:58151,fb:60440,li:4248},
+];
+function renderBars(){
+  const max = 560244;
+  const el = document.getElementById('bars-aufrufe');
+  el.innerHTML = AUFRUFE.map(d=>{
+    if(d.ph){
+      return `<div class="barcol"><div class="bartotal"></div><div class="barstack"></div><div class="barlabel" style="color:var(--linie)">${d.m}</div></div>`;
+    }
+    const total=d.ig+d.fb+d.li;
+    const h=t=> (t/max*100);
+    return `<div class="barcol">
+      <div class="bartotal">${total.toLocaleString('de-DE')}</div>
+      <div class="barstack" title="${total.toLocaleString('de-DE')} Aufrufe">
+        <div class="bar" style="height:${h(d.ig)}%;background:var(--ig)" title="Instagram ${d.ig.toLocaleString('de-DE')}"></div>
+        <div class="bar" style="height:${h(d.fb)}%;background:var(--fb)" title="Facebook ${d.fb.toLocaleString('de-DE')}"></div>
+        <div class="bar" style="height:${h(d.li)}%;background:var(--li)" title="LinkedIn ${d.li.toLocaleString('de-DE')}"></div>
+      </div>
+      <div class="barlabel">${d.m}</div>
+    </div>`;
+  }).join('');
+}
+
+
+/* ---- Top-Beiträge des Jahres ---- */
+const YEARTOP = {"balanced": [{"c": "ig", "month": "Apr", "date": "07.04.", "text": "Weltgesundheitstag – im Notfall anfangen", "reach": 14527, "inter": 1035, "er": 7.12, "paid": false, "url": "https://www.instagram.com/reel/DW1hMyQI5IB/"}, {"c": "fb", "month": "Jun", "date": "14.06.", "text": "Ferienstart: Kinder sicher begleiten (beworben)", "reach": 184496, "inter": 16, "er": 0.01, "paid": true, "url": "https://www.facebook.com/1445304764310873/posts/1450495857125097"}, {"c": "fb", "month": "Mär", "date": "03.03.", "text": "Kopf hoch, Handy weg", "reach": 153293, "inter": 45, "er": 0.03, "paid": true, "url": "https://www.facebook.com/1445304764310873/posts/1363274765847207"}, {"c": "ig", "month": "Mär", "date": "18.03.", "text": "Berlin lernt Leben retten – 5-Jahres-Kooperation", "reach": 15368, "inter": 735, "er": 4.78, "paid": false, "url": "https://www.instagram.com/reel/DWCNJ-hDGGC/"}, {"c": "ig", "month": "Jul", "date": "21.07.", "text": "10.000 Leben jährlich – habt keine Angst zu helfen", "reach": 15307, "inter": 799, "er": 5.22, "paid": false, "url": "https://www.instagram.com/reel/DbDvbM-o6D7/"}], "er": [{"c": "ig", "month": "Jan", "date": "21.01.", "text": "Neue Reanimationsleitlinien – jede Sekunde zählt", "reach": 360, "inter": 39, "er": 10.83, "paid": false, "url": "https://www.instagram.com/p/DTxE7-_DJAv/"}, {"c": "ig", "month": "Jun", "date": "24.06.", "text": "Fahrrad-Check vor der großen Sommertour", "reach": 343, "inter": 32, "er": 9.33, "paid": false, "url": "https://www.instagram.com/p/DZ-VPtAjPnn/"}, {"c": "ig", "month": "Feb", "date": "10.02.", "text": "Vorbereitung auf die Fahrradprüfung", "reach": 191, "inter": 17, "er": 8.9, "paid": false, "url": "https://www.instagram.com/p/DUkpTuwDBZ1/"}, {"c": "ig", "month": "Jul", "date": "23.07.", "text": "POV Helmfrisur – Team Helm oder Team „nicht so schlimm\"?", "reach": 250, "inter": 19, "er": 7.6, "paid": false, "url": "https://www.instagram.com/p/DbIqHERRb7o/"}, {"c": "ig", "month": "Apr", "date": "07.04.", "text": "Weltgesundheitstag – im Notfall anfangen", "reach": 14527, "inter": 1035, "er": 7.12, "paid": false, "url": "https://www.instagram.com/reel/DW1hMyQI5IB/"}], "inter": [{"c": "ig", "month": "Apr", "date": "07.04.", "text": "Weltgesundheitstag – im Notfall anfangen", "reach": 14527, "inter": 1035, "er": 7.12, "paid": false, "url": "https://www.instagram.com/reel/DW1hMyQI5IB/"}, {"c": "ig", "month": "Jul", "date": "21.07.", "text": "10.000 Leben jährlich – habt keine Angst zu helfen", "reach": 15307, "inter": 799, "er": 5.22, "paid": false, "url": "https://www.instagram.com/reel/DbDvbM-o6D7/"}, {"c": "ig", "month": "Mär", "date": "18.03.", "text": "Berlin lernt Leben retten – 5-Jahres-Kooperation", "reach": 15368, "inter": 735, "er": 4.78, "paid": false, "url": "https://www.instagram.com/reel/DWCNJ-hDGGC/"}, {"c": "li", "month": "Mär", "date": "12.03.", "text": "Berlin verankert Lebensrettung – 10.000 Leben", "reach": 4138, "inter": 214, "er": 5.17, "paid": false, "url": "https://www.linkedin.com/feed/update/urn:li:ugcPost:7440086566955409408"}, {"c": "fb", "month": "Jan", "date": "17.01.", "text": "Neue Reanimationsleitlinien – jede Sekunde zählt", "reach": 42887, "inter": 199, "er": 0.46, "paid": false, "url": "https://www.facebook.com/1445304764310873/posts/1326317919542892"}], "reach": [{"c": "fb", "month": "Jun", "date": "14.06.", "text": "Ferienstart: Kinder sicher begleiten (beworben)", "reach": 184496, "inter": 16, "er": 0.01, "paid": true, "url": "https://www.facebook.com/1445304764310873/posts/1450495857125097"}, {"c": "fb", "month": "Mär", "date": "03.03.", "text": "Kopf hoch, Handy weg", "reach": 153293, "inter": 45, "er": 0.03, "paid": true, "url": "https://www.facebook.com/1445304764310873/posts/1363274765847207"}, {"c": "fb", "month": "Feb", "date": "17.02.", "text": "Verkehrssituationen-Quiz", "reach": 135537, "inter": 20, "er": 0.01, "paid": true, "url": "https://www.facebook.com/1445304764310873/posts/1353441436830540"}, {"c": "fb", "month": "Apr", "date": "16.04.", "text": "Berlin lernt Leben retten (geboostet)", "reach": 108611, "inter": 20, "er": 0.02, "paid": true, "url": "https://www.facebook.com/1445304764310873/posts/1393680299473320"}, {"c": "fb", "month": "Jan", "date": "17.01.", "text": "Neue Reanimationsleitlinien – jede Sekunde zählt", "reach": 42887, "inter": 199, "er": 0.46, "paid": false, "url": "https://www.facebook.com/1445304764310873/posts/1326317919542892"}]};
+const YTOP_NOTE = {"balanced": "Ausgewogene Wertung aus Reichweite und Interaktion – zeigt die tatsächlichen Highlights des Jahres.", "er": "Sortiert nach Engagement-Rate. Bei kleiner Reichweite können hohe Raten entstehen – Reichweite zur Einordnung beachten.", "inter": "Sortiert nach absoluten Interaktionen (Likes, Kommentare, geteilte/gespeicherte Inhalte).", "reach": "Sortiert nach Reichweite. Beachten Sie: Die Spitzenwerte stammen überwiegend aus bezahlten Facebook-Kampagnen."};
+const MFULL = {"Jan": "Januar", "Feb": "Februar", "Mär": "März", "Apr": "April", "Mai": "Mai", "Jun": "Juni", "Jul": "Juli"};
+let YTOPSORT='balanced';
+const YHINT={balanced:'ausgewogen: Reichweite & Interaktion',er:'nach Engagement-Rate',inter:'nach Interaktionen',reach:'nach Reichweite'};
+function renderYearTop(){
+  const list=YEARTOP[YTOPSORT];
+  document.getElementById('ytop-hint').textContent=YHINT[YTOPSORT];
+  document.getElementById('ytop-note').textContent=YTOP_NOTE[YTOPSORT];
+  document.getElementById('ytop-posts').innerHTML=list.map((p,i)=>`
+    <a class="post" href="${p.url}" target="_blank" rel="noopener">
+      <div class="rank">${i+1}</div>
+      <div class="meta">
+        <span class="badge ${p.c}">${CHAN_LBL[p.c]}</span>${p.paid?'<span class="badge paid">Beworben</span>':''}
+        <span style="font-size:.72rem;color:var(--text-soft);font-weight:700;margin-left:6px">${MFULL[p.month]} 2026</span>
+        <div class="ptext">${p.text}</div>
+        <div class="pdate">${p.date}2026 · Beitrag öffnen ↗</div>
+      </div>
+      <div class="stats">
+        <div class="s"><b>${nf(p.reach)}</b>${p.c==='ig'?'Reichweite':'Aufrufe'}</div>
+        <div class="s"><b>${p.inter}</b>Interakt.</div>
+        <div class="s hl"><b>${pf(p.er)}%</b>Eng.-Rate</div>
+      </div>
+    </a>`).join('');
+}
+function filterYearTop(s,btn){
+  YTOPSORT=s;
+  document.querySelectorAll('.chanfilter button[data-y]').forEach(b=>b.classList.remove('active'));
+  btn.classList.add('active');
+  renderYearTop();
+}
+
+/* Follower-Linienchart (SVG) */
+const FOLLOWER = [
+  {m:'Jan',FB:6240,IG:3160,LI:1821},
+  {m:'Feb',FB:6231,IG:3156,LI:1826},
+  {m:'Mär',FB:6219,IG:3159,LI:1862},
+  {m:'Apr',FB:6212,IG:3166,LI:1877},
+  {m:'Mai',FB:6209,IG:3179,LI:1899},
+  {m:'Jun',FB:6200,IG:3196,LI:1959},
+  {m:'Jul',FB:6197,IG:3204,LI:1972},
+];
+function renderFollower(){
+  const W=900,H=300,pad={l:55,r:20,t:20,b:34};
+  const months=FOLLOWER.map(d=>d.m);
+  const allVals=FOLLOWER.flatMap(d=>[d.FB,d.IG,d.LI]);
+  const min=Math.floor((Math.min(...allVals)-100)/100)*100;
+  const max=Math.ceil((Math.max(...allVals)+100)/100)*100;
+  const x=i=> pad.l + i*((W-pad.l-pad.r)/(months.length-1));
+  const y=v=> pad.t + (1-(v-min)/(max-min))*(H-pad.t-pad.b);
+  const series=[['FB','var(--fb)'],['IG','var(--ig)'],['LI','var(--li)']];
+  let grid='';
+  for(let g=0;g<=4;g++){
+    const val=min+(max-min)*g/4; const yy=y(val);
+    grid+=`<line x1="${pad.l}" y1="${yy}" x2="${W-pad.r}" y2="${yy}" stroke="var(--linie)" stroke-width="1"/>
+           <text x="${pad.l-9}" y="${yy+4}" text-anchor="end" font-size="11" fill="var(--text-soft)">${val.toLocaleString('de-DE')}</text>`;
+  }
+  let xlbl=months.map((m,i)=>`<text x="${x(i)}" y="${H-12}" text-anchor="middle" font-size="11" fill="var(--text-soft)" font-weight="600">${m}</text>`).join('');
+  let lines=series.map(([k,col])=>{
+    const pts=FOLLOWER.map((d,i)=>`${x(i)},${y(d[k])}`).join(' ');
+    const dots=FOLLOWER.map((d,i)=>`<circle cx="${x(i)}" cy="${y(d[k])}" r="3.5" fill="${col}"/>`).join('');
+    return `<polyline points="${pts}" fill="none" stroke="${col}" stroke-width="2.5"/>${dots}`;
+  }).join('');
+  document.getElementById('follower-card').innerHTML=`
+    <div class="legend">
+      <span class="li-item"><span class="dot" style="background:var(--fb)"></span>Facebook 6.197</span>
+      <span class="li-item"><span class="dot" style="background:var(--ig)"></span>Instagram 3.204</span>
+      <span class="li-item"><span class="dot" style="background:var(--li)"></span>LinkedIn 1.972</span>
+    </div>
+    <svg class="line" viewBox="0 0 ${W} ${H}">${grid}${lines}${xlbl}</svg>
+    <p style="font-size:.76rem;color:var(--text-soft);margin-top:8px">Netto-Wachstum Jan–Juli: <b style="color:var(--text)">+152</b> (LinkedIn +151, Instagram +44, Facebook −43). LinkedIn trägt das Wachstum nahezu allein, Instagram wächst stetig mit; Facebook bleibt leicht rückläufig.</p>`;
+}
+
+/* Demografie-Renderer */
+function demoRows(data,color){
+  return data.map(d=>`
+    <div class="demo-row">
+      <div class="dr-top"><b>${d.l}</b><span>${d.v}</span></div>
+      <div class="demo-bar"><i style="width:${d.p}%;background:${color}"></i></div>
+    </div>`).join('');
+}
+function renderDemo(){
+  // IG Alter (gerundete %)
+  const igAge=[
+    {l:'25–34 Jahre',v:'18 %',p:60},
+    {l:'35–44 Jahre',v:'37 %',p:100},
+    {l:'45–54 Jahre',v:'21 %',p:57},
+    {l:'55–64 Jahre',v:'8 %',p:22},
+    {l:'18–24 Jahre',v:'4 %',p:11},
+  ];
+  document.getElementById('ig-age').innerHTML=demoRows(igAge,'var(--ig)');
+  // FB Land
+  const fbC=[
+    {l:'Deutschland',v:'97 %',p:100},
+    {l:'Österreich',v:'0,9 %',p:9},
+    {l:'Schweiz',v:'0,5 %',p:5},
+    {l:'Rumänien',v:'0,2 %',p:3},
+    {l:'Polen',v:'0,1 %',p:2},
+  ];
+  document.getElementById('fb-country').innerHTML=demoRows(fbC,'var(--fb)');
+  // LI Branche
+  const liInd=[
+    {l:'Consumer Services',v:'306',p:100},
+    {l:'Non-Profit',v:'210',p:69},
+    {l:'Civic & Social',v:'80',p:26},
+    {l:'Higher Education',v:'62',p:20},
+    {l:'Government',v:'59',p:19},
+  ];
+  document.getElementById('li-industry').innerHTML=demoRows(liInd,'var(--li)');
+}
+
+/* View-Switch */
+function switchView(v,btn){
+  document.querySelectorAll('.toggle button').forEach(b=>b.classList.remove('active'));
+  btn.classList.add('active');
+  document.getElementById('view-month').classList.toggle('active',v==='month');
+  document.getElementById('view-year').classList.toggle('active',v==='year');
+  document.getElementById('monthsel-wrap').style.visibility = v==='month'?'visible':'hidden';
+}
+
+/* Init */
+/* Init */
+selectMonth('Jul');
+renderBars();
+renderYearTop();
+renderFollower();
+renderDemo();
+</script>
+</body>
+</html>
